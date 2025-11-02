@@ -3,77 +3,196 @@
 {% block title %}Error Insights - Ray's Trading Journal{% endblock %}
 {% block page_title %}Error Pattern Detection & Suggestions{% endblock %}
 
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item active">Error Insights</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block extra_css %}
 <style>
+    .insights-header-modern {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .insights-header-modern {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .intro-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border-left: 5px solid #3b82f6;
+    }
+    
+    [data-bs-theme="dark"] .intro-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .chart-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .chart-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .chart-card .card-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        border: none;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    [data-bs-theme="dark"] .chart-card .card-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
     .insight-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        border-left: 4px solid;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 5px solid;
+        height: 100%;
     }
+    
+    [data-bs-theme="dark"] .insight-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
     .insight-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
     }
+    
     .severity-critical {
         border-left-color: #dc3545;
     }
+    
     .severity-moderate {
         border-left-color: #ffc107;
     }
+    
     .severity-improving {
         border-left-color: #28a745;
     }
+    
+    .insight-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 2px solid #e9ecef;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    [data-bs-theme="dark"] .insight-card .card-header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3338 100%);
+        border-bottom-color: #374151;
+    }
+    
     .stat-badge {
         font-size: 1.1rem;
         font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        display: inline-block;
     }
+    
     .suggestion-box {
-        background-color: #f8f9fa;
-        border-left: 3px solid #007bff;
-        padding: 1rem;
-        border-radius: 0.25rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-left: 4px solid #3b82f6;
+        padding: 1.25rem;
+        border-radius: 10px;
         margin-top: 1rem;
     }
+    
     [data-bs-theme="dark"] .suggestion-box {
-        background-color: #2d3338;
-        border-left-color: #0d6efd;
+        background: linear-gradient(135deg, #2d3338 0%, #1a1a1a 100%);
+        border-left-color: #60a5fa;
+    }
+    
+    .btn-regenerate {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-regenerate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="insights-header-modern">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-graph-down-arrow me-2"></i>Error Pattern Analysis
+            </h2>
+            <p class="mb-0 opacity-90">Automatically detect recurring mistakes and get actionable improvement suggestions</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+    </div>
+</div>
+
 <!-- Introduction -->
-<div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title">
-            <i class="bi bi-graph-down-arrow text-danger"></i> Error Pattern Analysis
-        </h5>
-        <p class="text-muted mb-3">
-            This section automatically analyzes your past trades to highlight recurring mistakes and provide 
-            actionable suggestions for improvement. The insights are generated from your After Trade, Pre Trade, 
-            and Backtesting journal entries.
-        </p>
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+<div class="intro-card card mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
-                <span class="badge bg-info">Total Trades Analyzed: {{ total_analyzed }}</span>
-                {% if generated_at %}
-                    <span class="badge bg-secondary ms-2">
-                        Last Updated: {{ generated_at|date:"M d, Y H:i" }}
+                <h5 class="mb-3 fw-bold">
+                    <i class="bi bi-info-circle-fill text-primary me-2"></i>About Error Insights
+                </h5>
+                <p class="text-muted mb-3">
+                    This section automatically analyzes your past trades to highlight recurring mistakes and provide 
+                    actionable suggestions for improvement. The insights are generated from your After Trade, Pre Trade, 
+                    and Backtesting journal entries.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="stat-badge bg-primary text-white">
+                        <i class="bi bi-bar-chart me-1"></i>Total Analyzed: {{ total_analyzed }}
                     </span>
-                {% endif %}
+                    {% if generated_at %}
+                        <span class="stat-badge bg-secondary text-white">
+                            <i class="bi bi-clock me-1"></i>Updated: {{ generated_at|date:"M d, Y H:i" }}
+                        </span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="btn-group">
-                <a href="{% url 'error_insights' %}" class="btn btn-outline-secondary {% if not time_filter %}active{% endif %}">
-                    All Time
-                </a>
-                <a href="{% url 'error_insights' %}?filter=last_30" class="btn btn-outline-secondary {% if time_filter == 'last_30' %}active{% endif %}">
-                    Last 30 Trades
-                </a>
-                <form method="post" action="{% url 'regenerate_insights' %}{% if time_filter %}?filter={{ time_filter }}{% endif %}" class="d-inline ms-2">
+            <div class="d-flex flex-column gap-2">
+                <div class="btn-group">
+                    <a href="{% url 'error_insights' %}" class="btn btn-outline-light {% if not time_filter %}active{% endif %}">
+                        All Time
+                    </a>
+                    <a href="{% url 'error_insights' %}?filter=last_30" class="btn btn-outline-light {% if time_filter == 'last_30' %}active{% endif %}">
+                        Last 30 Trades
+                    </a>
+                </div>
+                <form method="post" action="{% url 'regenerate_insights' %}{% if time_filter %}?filter={{ time_filter }}{% endif %}" class="d-inline">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-arrow-clockwise"></i> Regenerate Insights
+                    <button type="submit" class="btn btn-regenerate text-white w-100">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Regenerate Insights
                     </button>
                 </form>
             </div>
@@ -83,17 +202,13 @@
 
 <!-- Summary Chart -->
 {% if chart_data.labels %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Error Pattern Distribution</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="patternChart"></canvas>
-                </div>
-            </div>
+<div class="chart-card card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2"></i>Error Pattern Distribution</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="patternChart"></canvas>
         </div>
     </div>
 </div>
@@ -109,45 +224,45 @@
                     {% elif insight.severity_score >= 40 %}severity-moderate
                     {% else %}severity-improving{% endif %}">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
+                        <h5 class="mb-0 fw-bold">
                             {% if insight.type == 'market_condition' %}
-                                <i class="bi bi-cloud-rain text-primary"></i>
+                                <i class="bi bi-cloud-rain-fill text-primary me-2"></i>
                             {% elif insight.type == 'discipline' %}
-                                <i class="bi bi-exclamation-triangle text-warning"></i>
+                                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
                             {% elif insight.type == 'bias' %}
-                                <i class="bi bi-arrow-left-right text-info"></i>
+                                <i class="bi bi-arrow-left-right text-info me-2"></i>
                             {% elif insight.type == 'entry_timing' %}
-                                <i class="bi bi-clock-history text-danger"></i>
+                                <i class="bi bi-clock-history text-danger me-2"></i>
                             {% elif insight.type == 'poi' %}
-                                <i class="bi bi-bullseye text-secondary"></i>
+                                <i class="bi bi-bullseye text-secondary me-2"></i>
                             {% elif insight.type == 'session' %}
-                                <i class="bi bi-calendar-event text-success"></i>
+                                <i class="bi bi-calendar-event-fill text-success me-2"></i>
                             {% elif insight.type == 'behavior' %}
-                                <i class="bi bi-graph-down text-danger"></i>
+                                <i class="bi bi-graph-down text-danger me-2"></i>
                             {% else %}
-                                <i class="bi bi-info-circle text-primary"></i>
+                                <i class="bi bi-info-circle-fill text-primary me-2"></i>
                             {% endif %}
                             {{ insight.title }}
                         </h5>
                         <span class="badge 
                             {% if insight.severity_score >= 70 %}bg-danger
                             {% elif insight.severity_score >= 40 %}bg-warning
-                            {% else %}bg-success{% endif %}">
-                            Severity: {{ insight.severity_score }}%
+                            {% else %}bg-success{% endif %} px-3 py-2">
+                            {{ insight.severity_score }}%
                         </span>
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-3">{{ insight.description }}</p>
                         
                         <div class="mb-3">
-                            <strong><i class="bi bi-bar-chart"></i> Statistics:</strong>
-                            <div class="stat-badge bg-light text-dark mt-2 d-inline-block">
+                            <strong><i class="bi bi-bar-chart-fill me-2"></i>Statistics:</strong>
+                            <div class="stat-badge bg-light text-dark mt-2">
                                 {{ insight.statistics }}
                             </div>
                         </div>
                         
                         <div class="suggestion-box">
-                            <strong><i class="bi bi-lightbulb text-warning"></i> Suggestion:</strong>
+                            <strong><i class="bi bi-lightbulb-fill text-warning me-2"></i>Suggestion:</strong>
                             <p class="mb-0 mt-2">{{ insight.suggestion }}</p>
                         </div>
                         
@@ -163,8 +278,8 @@
                                             <input type="hidden" name="{{ key }}" value="{{ value }}">
                                         {% endif %}
                                     {% endfor %}
-                                    <button type="submit" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-list-ul"></i> View Related Trades
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="bi bi-list-ul me-2"></i>View Related Trades
                                     </button>
                                 </form>
                             </div>
@@ -175,9 +290,9 @@
         {% endfor %}
     </div>
 {% else %}
-    <div class="card">
+    <div class="card border-0 shadow-sm">
         <div class="card-body text-center py-5">
-            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
             <h5 class="mt-3 text-muted">No Error Patterns Detected</h5>
             <p class="text-muted">
                 {% if total_analyzed == 0 %}
@@ -187,8 +302,8 @@
                 {% endif %}
             </p>
             {% if total_analyzed == 0 %}
-                <a href="/journal/after/create/" class="btn btn-primary mt-2">
-                    <i class="bi bi-plus-circle"></i> Create Your First Trade Entry
+                <a href="{% url 'after_trade_create' %}" class="btn btn-primary mt-2">
+                    <i class="bi bi-plus-circle me-2"></i>Create Your First Trade Entry
                 </a>
             {% endif %}
         </div>
@@ -211,22 +326,23 @@
                     label: 'Pattern Count',
                     data: {{ chart_data.counts }},
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)',
                     ],
                     borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(251, 191, 36, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(139, 92, 246, 1)',
+                        'rgba(236, 72, 153, 1)',
                     ],
-                    borderWidth: 1
+                    borderWidth: 2,
+                    borderRadius: 8
                 }]
             },
             options: {
@@ -254,4 +370,3 @@
 </script>
 {% endif %}
 {% endblock %}
-

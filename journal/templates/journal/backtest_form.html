@@ -1,19 +1,113 @@
 {% extends 'journal/base_dashboard.html' %}
-{% block title %}{{ action }} Backtest Entry{% endblock %}
+
+{% block title %}{{ action }} Backtest Entry - Ray's Trading Journal{% endblock %}
 {% block page_title %}{{ action }} Backtest Entry{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'backtest_list' %}">Backtesting Journal</a></li>
+        <li class="breadcrumb-item active">{{ action }} Entry</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header-modern {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .form-header-modern {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .form-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #3b82f6;
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateX(2px);
+    }
+    
+    [data-bs-theme="dark"] .form-section {
+        background-color: #2d3338;
+        border-left-color: #60a5fa;
+    }
+    
+    .form-section-title {
+        color: #3b82f6;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+        font-size: 1.1rem;
+    }
+    
+    [data-bs-theme="dark"] .form-section-title {
+        color: #60a5fa;
+        border-bottom-color: #4b5563;
+    }
+    
+    .back-btn-modern {
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn-modern:hover {
+        transform: translateX(-3px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0"><i class="bi bi-graph-up"></i> {{ action }} Backtest Entry</h5>
+<!-- Modern Header -->
+<div class="form-header-modern">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-graph-up-arrow-fill me-2"></i>{{ action }} Backtest Entry
+            </h2>
+            <p class="mb-0 opacity-90">Document and analyze strategy testing results</p>
+        </div>
+        <a href="{% url 'backtest_list' %}" class="btn btn-light back-btn-modern">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+        </a>
     </div>
-    <div class="card-body">
+</div>
+
+<div class="form-card card">
+    <div class="card-body p-4">
         {% if form %}
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
             <!-- Basic Info -->
-            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2"><i class="bi bi-info-circle"></i> Basic Information</h6>
-            <div class="row g-3 mb-4">
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-info-circle"></i> Basic Information</h6>
+                <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Pair *</label>
                     {{ form.pair }}
@@ -32,9 +126,12 @@
                 </div>
             </div>
             
+            </div>
+            
             <!-- Market Conditions -->
-            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-graph-up"></i> Market Conditions</h6>
-            <div class="row g-3 mb-4">
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-graph-up"></i> Market Conditions</h6>
+                <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Market Condition *</label>
                     {{ form.market_condition }}
@@ -51,9 +148,12 @@
                 </div>
             </div>
             
+            </div>
+            
             <!-- Structure & Entry -->
-            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-diagram-3"></i> Structure & Entry Setup</h6>
-            <div class="row g-3 mb-4">
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-diagram-3"></i> Structure & Entry Setup</h6>
+                <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Break of Structure (BOS) *</label>
                     {{ form.lower_tf_bos }}
@@ -95,9 +195,12 @@
                 </div>
             </div>
             
+            </div>
+            
             <!-- News & Behavior -->
-            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-newspaper"></i> News & Market Behavior</h6>
-            <div class="row g-3 mb-4">
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-newspaper"></i> News & Market Behavior</h6>
+                <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold">High Impact News Day</label>
                     {{ form.high_impact_news }}
@@ -113,9 +216,12 @@
                 {{ form.behaviour_based_on_previous_moves }}
             </div>
             
+            </div>
+            
             <!-- Outcome -->
-            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-trophy"></i> Outcome & Notes</h6>
-            <div class="row g-3 mb-4">
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-trophy"></i> Outcome & Notes</h6>
+                <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Outcome *</label>
                     {{ form.outcome }}
@@ -160,11 +266,13 @@
                 </div>
             {% endif %}
             
+            </div>
+            
             <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-info fw-bold">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold">
                     <i class="bi bi-save"></i> Save Entry
                 </button>
-                <a href="{% url 'backtest_list' %}" class="btn btn-secondary">
+                <a href="{% url 'backtest_list' %}" class="btn btn-secondary btn-lg">
                     <i class="bi bi-x"></i> Cancel
                 </a>
             </div>

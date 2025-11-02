@@ -1,24 +1,92 @@
 {% extends 'journal/base.html' %}
 {% block title %}Login - Ray's Trading Journal{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Login</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
-                    <p class="mt-3 text-center">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
-                </div>
-            </div>
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="brand-logo">
+            <i class="bi bi-graph-up-arrow brand-icon"></i>
+            <h2>Ray's Trading Journal</h2>
         </div>
+        <div class="auth-icon">
+            <i class="bi bi-box-arrow-in-right"></i>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Sign in to access your trading journal</p>
+    </div>
+    
+    <div class="auth-body">
+        {% if form.errors %}
+            <ul class="errorlist">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            {% if field != '__all__' %}<strong>{{ field|title }}:</strong> {% endif %}{{ error }}
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <form method="post" id="loginForm">
+            {% csrf_token %}
+            
+            <div class="form-floating">
+                <input type="text" 
+                       class="form-control" 
+                       id="id_username" 
+                       name="username" 
+                       placeholder="Username"
+                       required
+                       autofocus>
+                <label for="id_username">
+                    <i class="bi bi-person me-2"></i>Username
+                </label>
+            </div>
+            
+            <div class="form-floating">
+                <input type="password" 
+                       class="form-control" 
+                       id="id_password" 
+                       name="password" 
+                       placeholder="Password"
+                       required>
+                <label for="id_password">
+                    <i class="bi bi-lock me-2"></i>Password
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-auth w-100 text-white">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Sign In
+            </button>
+        </form>
+    </div>
+    
+    <div class="auth-footer">
+        <p>
+            Don't have an account? 
+            <a href="{% url 'register' %}">
+                <i class="bi bi-person-plus me-1"></i>Create Account
+            </a>
+        </p>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    // Add smooth animation on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const card = document.querySelector('.auth-card');
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100);
+    });
+</script>
+{% endblock %}

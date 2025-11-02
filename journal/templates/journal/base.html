@@ -6,10 +6,203 @@
     <title>{% block title %}Ray's Trading Journal{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        [data-bs-theme="dark"] body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+        }
+        .auth-card {
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            background: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        [data-bs-theme="dark"] .auth-card {
+            background: #2d3338;
+        }
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+        }
+        .auth-header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        [data-bs-theme="dark"] .auth-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .auth-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-body {
+            padding: 40px 35px;
+        }
+        .form-floating {
+            margin-bottom: 20px;
+        }
+        .form-floating > label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        [data-bs-theme="dark"] .form-floating > label {
+            color: #adb5bd;
+        }
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        }
+        [data-bs-theme="dark"] .form-control {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #ffffff;
+        }
+        [data-bs-theme="dark"] .form-control:focus {
+            background-color: #374151;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+        .btn-auth {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        }
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+        .auth-footer {
+            text-align: center;
+            padding: 20px 35px 30px;
+            border-top: 1px solid #e9ecef;
+        }
+        [data-bs-theme="dark"] .auth-footer {
+            border-top-color: #374151;
+        }
+        .auth-footer p {
+            margin: 0;
+            color: #6c757d;
+        }
+        [data-bs-theme="dark"] .auth-footer p {
+            color: #adb5bd;
+        }
+        .auth-footer a {
+            color: #3b82f6;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .auth-footer a:hover {
+            color: #1e40af;
+            text-decoration: underline;
+        }
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+        .errorlist li {
+            background: #fee;
+            color: #c33;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #dc3545;
+            font-size: 0.9rem;
+        }
+        [data-bs-theme="dark"] .errorlist li {
+            background: #4a1f1f;
+            color: #ff6b6b;
+            border-left-color: #dc3545;
+        }
+        .form-text {
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .brand-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .brand-logo h2 {
+            color: white;
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        .brand-logo .brand-icon {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <div class="auth-container">
+        {% block content %}{% endblock %}
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
-

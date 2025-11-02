@@ -1,66 +1,147 @@
 {% extends 'journal/base_dashboard.html' %}
 {% block title %}Profile - Ray's Trading Journal{% endblock %}
 {% block page_title %}Profile{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item active">Profile</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-person"></i> Account Information</h5>
+<div class="row g-4 mb-4">
+    <!-- Account Information Card -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>Account Information
+                </h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.8rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h3 class="mb-0">{{ user.username }}</h3>
+                            <small class="text-muted">Trading Journal User</small>
+                        </div>
+                    </div>
+                </div>
+                
                 <table class="table table-borderless">
-                    <tr>
-                        <th width="40%">Username:</th>
-                        <td><strong>{{ user.username }}</strong></td>
-                    </tr>
-                    <tr>
-                        <th>Email:</th>
-                        <td>{{ user.email|default:"Not provided" }}</td>
-                    </tr>
-                    <tr>
-                        <th>Date Joined:</th>
-                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
-                    </tr>
-                    <tr>
-                        <th>Last Login:</th>
-                        <td>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
-                    </tr>
+                    <tbody>
+                        <tr class="py-3">
+                            <th width="35%" class="ps-0">
+                                <i class="bi bi-envelope me-2 text-primary"></i>Email:
+                            </th>
+                            <td class="fw-semibold">{{ user.email|default:"Not provided" }}</td>
+                        </tr>
+                        <tr class="py-3">
+                            <th width="35%" class="ps-0">
+                                <i class="bi bi-calendar-event me-2 text-primary"></i>Date Joined:
+                            </th>
+                            <td class="fw-semibold">{{ user.date_joined|date:"F d, Y" }}</td>
+                        </tr>
+                        <tr class="py-3">
+                            <th width="35%" class="ps-0">
+                                <i class="bi bi-clock-history me-2 text-primary"></i>Last Login:
+                            </th>
+                            <td class="fw-semibold">{{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Journal Statistics</h5>
+    
+    <!-- Journal Statistics Card -->
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-bar-chart-fill me-2"></i>Journal Statistics
+                </h4>
             </div>
-            <div class="card-body">
-                {% with after=user.after_trade_entries.count pre=user.pre_trade_entries.count backtest=user.backtest_entries.count %}
-                <table class="table table-borderless">
-                    <tr>
-                        <th width="40%">After Trade Entries:</th>
-                        <td><strong>{{ after }}</strong></td>
-                    </tr>
-                    <tr>
-                        <th>Pre Trade Entries:</th>
-                        <td><strong>{{ pre }}</strong></td>
-                    </tr>
-                    <tr>
-                        <th>Backtest Entries:</th>
-                        <td><strong>{{ backtest }}</strong></td>
-                    </tr>
-                    <tr>
-                        <th>Total Entries:</th>
-                        <td><strong class="text-primary">
-                            {% widthratio after 1 1 as after_num %}
-                            {% widthratio pre 1 1 as pre_num %}
-                            {% widthratio backtest 1 1 as backtest_num %}
-                            {{ after|add:pre|add:backtest }}
-                        </strong></td>
-                    </tr>
-                </table>
-                {% endwith %}
+            <div class="card-body p-4">
+                <!-- Total Entries Highlight -->
+                <div class="text-center mb-4 pb-4 border-bottom">
+                    <div class="display-4 fw-bold text-primary mb-2">{{ total_entries }}</div>
+                    <p class="text-muted mb-0">Total Journal Entries</p>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                <strong class="text-dark">After Trade Entries</strong>
+                            </div>
+                            <span class="badge bg-primary fs-6 px-3 py-2">{{ after_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="bi bi-eye-fill text-primary me-2"></i>
+                                <strong class="text-dark">Pre Trade Entries</strong>
+                            </div>
+                            <span class="badge bg-primary fs-6 px-3 py-2">{{ pre_count }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <div>
+                                <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+                                <strong class="text-dark">Backtest Entries</strong>
+                            </div>
+                            <span class="badge bg-primary fs-6 px-3 py-2">{{ backtest_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning-charge me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'after_trade_list' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <div class="fw-bold">View After Trades</div>
+                            <small>Manage completed trades</small>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'pre_trade_list' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-eye me-2"></i>
+                            <div class="fw-bold">View Pre Trades</div>
+                            <small>Review trade plans</small>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'backtest_list' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-graph-up me-2"></i>
+                            <div class="fw-bold">View Backtests</div>
+                            <small>Check strategy tests</small>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

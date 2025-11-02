@@ -3,39 +3,113 @@
 {% block title %}{{ action }} After Trade Entry - Ray's Trading Journal{% endblock %}
 {% block page_title %}{{ action }} After Trade Entry{% endblock %}
 
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'after_trade_list' %}">After Trade Journal</a></li>
+        <li class="breadcrumb-item active">{{ action }} Entry</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block extra_css %}
 <style>
+    .form-header-modern {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .form-header-modern {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .form-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
     .form-section {
         background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 25px;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
         border-left: 4px solid #3b82f6;
+        transition: all 0.3s ease;
     }
+    
+    .form-section:hover {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateX(2px);
+    }
+    
     [data-bs-theme="dark"] .form-section {
         background-color: #2d3338;
         border-left-color: #60a5fa;
     }
+    
     .form-section-title {
         color: #3b82f6;
-        font-weight: 600;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
         border-bottom: 2px solid #dee2e6;
+        font-size: 1.1rem;
     }
+    
     [data-bs-theme="dark"] .form-section-title {
         color: #60a5fa;
         border-bottom-color: #4b5563;
+    }
+    
+    .form-label {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    [data-bs-theme="dark"] .form-label {
+        color: #e9ecef;
+    }
+    
+    .back-btn-modern {
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn-modern:hover {
+        transform: translateX(-3px);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bi bi-check-circle"></i> {{ action }} After Trade Entry</h5>
+<!-- Modern Header -->
+<div class="form-header-modern">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-check-circle-fill me-2"></i>{{ action }} After Trade Entry
+            </h2>
+            <p class="mb-0 opacity-90">Log and analyze your completed trades</p>
+        </div>
+        <a href="{% url 'after_trade_list' %}" class="btn btn-light back-btn-modern">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+        </a>
     </div>
-    <div class="card-body">
+</div>
+
+<div class="form-card card">
+    <div class="card-body p-4">
         {% if form %}
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}

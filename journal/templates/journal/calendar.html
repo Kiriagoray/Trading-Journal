@@ -1,16 +1,85 @@
 {% extends 'journal/base_dashboard.html' %}
 {% block title %}Calendar - Ray's Trading Journal{% endblock %}
 {% block page_title %}Calendar{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item active">Calendar</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-header-modern {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .calendar-header-modern {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .calendar-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .calendar-card {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .calendar-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 2px solid #e9ecef;
+        padding: 1.5rem;
+        font-weight: 600;
+    }
+    
+    [data-bs-theme="dark"] .calendar-card .card-header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3338 100%);
+        border-bottom-color: #374151;
+    }
+    
+    #calendar {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-calendar3"></i> Trading Journal Calendar</h5>
+<div class="calendar-header-modern">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-calendar3-fill me-2"></i>Trading Journal Calendar
+            </h2>
+            <p class="mb-0 opacity-90">View all your trades organized by date</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
     </div>
-    <div class="card-body">
+</div>
+
+<div class="calendar-card card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Monthly View</h5>
+    </div>
+    <div class="card-body p-0">
         <div id="calendar" style="min-height: 600px;"></div>
     </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
@@ -19,22 +88,31 @@
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
             events: [
                 {% for entry in after_trades %}
                     {
                         title: 'After: {{ entry.pair }} - {{ entry.outcome }}',
                         start: '{{ entry.date|date:"Y-m-d" }}',
                         url: '{% url "after_trade_detail" entry.pk %}',
-                        color: '{% if entry.outcome == "win" %}#28a745{% else %}#dc3545{% endif %}'
+                        color: '{% if entry.outcome == "win" %}#3b82f6{% else %}#dc3545{% endif %}',
+                        textColor: 'white'
                     },
                 {% endfor %}
             ],
             eventClick: function(info) {
+                info.jsEvent.preventDefault();
                 window.location.href = info.event.url;
-            }
+            },
+            eventDisplay: 'block',
+            dayMaxEvents: true,
+            moreLinkClick: 'popover'
         });
         calendar.render();
     });
 </script>
 {% endblock %}
-

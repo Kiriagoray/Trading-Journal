@@ -1,31 +1,161 @@
 {% extends 'journal/base_dashboard.html' %}
 {% block title %}Lot Size Calculator - Ray's Trading Journal{% endblock %}
 {% block page_title %}Lot Size Calculator{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item active">Lot Size Calculator</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calculator-header-modern {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .calculator-header-modern {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .calculator-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .calculator-card {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .calculator-card .card-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+        font-weight: 600;
+    }
+    
+    [data-bs-theme="dark"] .calculator-card .card-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .result-card {
+        border: none;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-left: 5px solid #3b82f6;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    [data-bs-theme="dark"] .result-card {
+        background: linear-gradient(135deg, #2d3338 0%, #1a1a1a 100%);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .btn-calculate {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-calculate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+    }
+    
+    .lot-size-display {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    [data-bs-theme="dark"] .lot-size-display {
+        background: linear-gradient(135deg, #60a5fa, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-calculator"></i> Lot Size Calculator</h5>
+<div class="calculator-header-modern">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-calculator-fill me-2"></i>Lot Size Calculator
+            </h2>
+            <p class="mb-0 opacity-90">Calculate the optimal lot size for your trades based on risk management</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
     </div>
-    <div class="card-body">
+</div>
+
+<div class="calculator-card card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Input Parameters</h5>
+    </div>
+    <div class="card-body p-4">
         <form method="post" id="lotCalculatorForm">
             {% csrf_token %}
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Account Balance (USD) *</label>
-                    <input type="number" name="account_balance" class="form-control" step="0.01" required>
-                    <small class="form-text text-muted"><strong>Amount should be in USD</strong></small>
+                    <label class="form-label fw-bold">Account Balance (USD) *</label>
+                    <input type="number" name="account_balance" class="form-control" step="0.01" required placeholder="Enter account balance">
+                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Amount should be in USD</small>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Risk Percentage *</label>
-                    <input type="number" name="risk_percentage" class="form-control" step="0.01" required>
+                    <label class="form-label fw-bold">Risk Percentage *</label>
+                    <input type="number" name="risk_percentage" class="form-control" step="0.01" required placeholder="e.g., 1.0">
+                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Percentage of account to risk</small>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Stop Loss (Pips) *</label>
-                    <input type="number" name="stop_loss_pips" class="form-control" step="0.01" required>
+                    <label class="form-label fw-bold">Stop Loss (Pips) *</label>
+                    <input type="number" name="stop_loss_pips" class="form-control" step="0.01" required placeholder="e.g., 20">
+                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Stop loss distance in pips</small>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Instrument *</label>
+                    <label class="form-label fw-bold">Instrument *</label>
                     <select name="instrument" class="form-select" required>
+                        <option value="">Select instrument...</option>
                         <option value="EUR/USD">EUR/USD</option>
                         <option value="GBP/USD">GBP/USD</option>
                         <option value="USD/JPY">USD/JPY</option>
@@ -34,24 +164,32 @@
                         <option value="BTC/USD">BTC/USD</option>
                         <option value="ETH/USD">ETH/USD</option>
                     </select>
+                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Trading instrument</small>
                 </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-calculator"></i> Calculate
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-calculate text-white w-100 w-md-auto">
+                        <i class="bi bi-calculator-fill me-2"></i>Calculate Lot Size
                     </button>
                 </div>
             </div>
         </form>
-        
-        {% if calculated_lot %}
-        <div class="alert alert-success mt-3">
-            <h5>Calculated Lot Size: <strong>{{ calculated_lot }}</strong></h5>
-            <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('{{ calculated_lot }}')">
-                <i class="bi bi-clipboard"></i> Copy to Clipboard
-            </button>
-        </div>
-        {% endif %}
     </div>
 </div>
+        
+{% if calculated_lot %}
+<div class="result-card card">
+    <div class="card-body p-4">
+        <div class="text-center mb-3">
+            <h5 class="text-muted mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i>Calculated Result</h5>
+            <div class="lot-size-display mb-3">{{ calculated_lot }}</div>
+            <p class="text-muted mb-0">Recommended lot size for Deriv broker</p>
+        </div>
+        <div class="d-flex justify-content-center gap-2 mt-4">
+            <button class="btn btn-primary btn-lg" onclick="navigator.clipboard.writeText('{{ calculated_lot }}'); this.innerHTML='<i class=\'bi bi-check-circle me-2\'></i>Copied!'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard me-2\'></i>Copy to Clipboard', 2000);">
+                <i class="bi bi-clipboard me-2"></i>Copy to Clipboard
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
-

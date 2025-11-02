@@ -4,7 +4,8 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-# Choice constants
+# Choice constants - These are fallbacks if Configuration system is not set up
+# The actual choices should come from ChoiceOption model via utils.get_choices()
 SESSION_CHOICES = [
     ('Asian', 'Asian'),
     ('London', 'London'),
@@ -240,6 +241,50 @@ class BacktestEntry(models.Model):
 
     def __str__(self):
         return f"{self.pair} - {self.date} - {self.outcome}"
+
+
+class ChoiceCategory(models.Model):
+    """Category for grouping choices"""
+    name = models.CharField(max_length=50, unique=True, help_text='Internal name (e.g., session, market_condition)')
+    display_name = models.CharField(max_length=100, help_text='Display name (e.g., Trading Session)')
+    description = models.TextField(blank=True, help_text='Description of this category')
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text='Display order')
+    
+    class Meta:
+        verbose_name_plural = 'Choice Categories'
+        ordering = ['order', 'display_name']
+    
+    def __str__(self):
+        return self.display_name
+
+
+class ChoiceOption(models.Model):
+    """Individual option within a choice category"""
+    category = models.ForeignKey(ChoiceCategory, on_delete=models.CASCADE, related_name='options')
+    value = models.CharField(max_length=100, help_text='Value stored in database')
+    display_label = models.CharField(max_length=100, help_text='Label shown to users')
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text='Display order within category')
+    color = models.CharField(max_length=7, default='#6c757d', help_text='Hex color for badges (optional)')
+    
+    class Meta:
+        ordering = ['category__order', 'category__name', 'order', 'display_label']
+        unique_together = [['category', 'value']]
+    
+    def __str__(self):
+        return f"{self.category.display_name}: {self.display_label}"
+    
+    @classmethod
+    def get_choices_for_category(cls, category_name):
+        """Get choices tuple list for a category name"""
+        try:
+            category = ChoiceCategory.objects.get(name=category_name, is_active=True)
+            options = cls.objects.filter(category=category, is_active=True).order_by('order', 'display_label')
+            return [(opt.value, opt.display_label) for opt in options]
+        except ChoiceCategory.DoesNotExist:
+            return []
 
 
 class FilterPreset(models.Model):

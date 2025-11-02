@@ -3,6 +3,12 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from decimal import Decimal
 from .models import AfterTradeEntry, PreTradeEntry, BacktestEntry, StrategyTag, FilterPreset, LotSizeCalculation
+from .utils import (
+    get_session_choices, get_bias_choices, get_market_condition_choices,
+    get_liquidity_analysis_choices, get_outcome_choices, get_discipline_score_choices,
+    get_entry_quality_choices, get_market_behaviour_choices, get_day_of_week_choices,
+    get_backtest_outcome_choices
+)
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -28,17 +34,17 @@ class AfterTradeEntryForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'time_of_entry': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'pair': forms.TextInput(attrs={'class': 'form-control'}),
-            'session': forms.Select(attrs={'class': 'form-select'}),
-            'bias': forms.Select(attrs={'class': 'form-select'}),
-            'liquidity_analysis': forms.Select(attrs={'class': 'form-select'}),
-            'market_condition': forms.Select(attrs={'class': 'form-select'}),
+            'session': forms.Select(choices=get_session_choices(), attrs={'class': 'form-select'}),
+            'bias': forms.Select(choices=get_bias_choices(), attrs={'class': 'form-select'}),
+            'liquidity_analysis': forms.Select(choices=get_liquidity_analysis_choices(), attrs={'class': 'form-select'}),
+            'market_condition': forms.Select(choices=get_market_condition_choices(), attrs={'class': 'form-select'}),
             'lower_tf_confirmation': forms.Select(attrs={'class': 'form-select'}),
             'predicted_directional_bias': forms.Select(attrs={'class': 'form-select'}),
             'poi_performance': forms.Select(attrs={'class': 'form-select'}),
-            'market_behaviour': forms.Select(attrs={'class': 'form-select'}),
-            'entry_quality': forms.Select(attrs={'class': 'form-select'}),
-            'outcome': forms.Select(attrs={'class': 'form-select'}),
-            'discipline_score': forms.Select(attrs={'class': 'form-select'}),
+            'market_behaviour': forms.Select(choices=get_market_behaviour_choices(), attrs={'class': 'form-select'}),
+            'entry_quality': forms.Select(choices=get_entry_quality_choices(), attrs={'class': 'form-select'}),
+            'outcome': forms.Select(choices=get_outcome_choices(), attrs={'class': 'form-select'}),
+            'discipline_score': forms.Select(choices=get_discipline_score_choices(), attrs={'class': 'form-select'}),
             'poi_quality_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
             'risk_percentage': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'risk_pips': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -122,12 +128,12 @@ class PreTradeEntryForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'pair': forms.TextInput(attrs={'class': 'form-control'}),
-            'bias': forms.Select(attrs={'class': 'form-select'}),
+            'bias': forms.Select(choices=get_bias_choices(), attrs={'class': 'form-select'}),
             'predicted_htf_direction': forms.Select(choices=PREDICTED_HTF_DIRECTION_CHOICES, attrs={'class': 'form-select'}),
             'market_condition': forms.Select(choices=MARKET_CONDITION_CHOICES_EXTENDED, attrs={'class': 'form-select'}),
-            'liquidity_analysis': forms.Select(attrs={'class': 'form-select'}),
+            'liquidity_analysis': forms.Select(choices=get_liquidity_analysis_choices(), attrs={'class': 'form-select'}),
             'htf_poi_type': forms.Select(choices=HTF_POI_TYPE_CHOICES, attrs={'class': 'form-select'}),
-            'session_target': forms.Select(choices=SESSION_TARGET_CHOICES, attrs={'class': 'form-select'}),
+            'session_target': forms.Select(choices=get_session_choices(), attrs={'class': 'form-select'}),
             'htf_draws': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'e.g., Resting London lows, Asian lows, HTF FVG'}),
             'lower_tf_confirmation': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'e.g., 15M BOS + Retest, 5M BOS + Retest, OB entry'}),
             'reason_for_taking_or_not': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -152,12 +158,12 @@ class BacktestEntryForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'entry_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'pair': forms.TextInput(attrs={'class': 'form-control'}),
-            'htf_bias': forms.Select(attrs={'class': 'form-select'}),
-            'day_of_week': forms.Select(attrs={'class': 'form-select'}),
+            'htf_bias': forms.Select(choices=get_bias_choices(), attrs={'class': 'form-select'}),
+            'day_of_week': forms.Select(choices=get_day_of_week_choices(), attrs={'class': 'form-select'}),
             'market_condition': forms.Select(choices=MARKET_CONDITION_CHOICES_EXTENDED, attrs={'class': 'form-select'}),
-            'liquidity_analysis': forms.Select(attrs={'class': 'form-select'}),
-            'session_time': forms.Select(choices=SESSION_TIME_CHOICES, attrs={'class': 'form-select'}),
-            'outcome': forms.Select(attrs={'class': 'form-select'}),
+            'liquidity_analysis': forms.Select(choices=get_liquidity_analysis_choices(), attrs={'class': 'form-select'}),
+            'session_time': forms.Select(choices=get_session_choices(), attrs={'class': 'form-select'}),
+            'outcome': forms.Select(choices=get_backtest_outcome_choices(), attrs={'class': 'form-select'}),
             'lower_tf_bos': forms.Select(choices=LOWER_TF_CONFIRMATION_CHOICES_DETAILED, attrs={'class': 'form-select'}),
             'entry_trigger': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 15M BOS + Retest'}),
             'high_impact_news': forms.Select(choices=HIGH_IMPACT_NEWS_CHOICES, attrs={'class': 'form-select'}),

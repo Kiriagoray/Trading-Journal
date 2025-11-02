@@ -516,7 +516,21 @@ def load_filter_preset(request, preset_id):
 @login_required
 def profile(request):
     """User profile page"""
-    return render(request, 'journal/profile.html', {'user': request.user})
+    from .models import AfterTradeEntry, PreTradeEntry, BacktestEntry
+    
+    after_count = AfterTradeEntry.objects.filter(user=request.user).count()
+    pre_count = PreTradeEntry.objects.filter(user=request.user).count()
+    backtest_count = BacktestEntry.objects.filter(user=request.user).count()
+    total_entries = after_count + pre_count + backtest_count
+    
+    context = {
+        'user': request.user,
+        'after_count': after_count,
+        'pre_count': pre_count,
+        'backtest_count': backtest_count,
+        'total_entries': total_entries,
+    }
+    return render(request, 'journal/profile.html', context)
 
 
 # Error Insights Views (already defined, keeping them)

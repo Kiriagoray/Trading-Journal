@@ -1,33 +1,315 @@
 {% extends 'journal/base_dashboard.html' %}
 
-{% block title %}Command Center - Ray's Trading Journal{% endblock %}
-{% block page_title %}Command Center{% endblock %}
+{% block title %}Insight Hub - Ray's Trading Journal{% endblock %}
+{% block page_title %}Insight Hub{% endblock %}
 
 {% block extra_css %}
 <style>
-    .quick-add-btn {
+    /* Modern Dashboard Styling */
+    .dashboard-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .dashboard-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    /* Enhanced KPI Cards */
+    .kpi-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    
+    [data-bs-theme="dark"] .kpi-card {
+        background: linear-gradient(135deg, #2d3338 0%, #1a1a1a 100%);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .kpi-card:hover::before {
+        opacity: 1;
+    }
+    
+    .kpi-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(96, 165, 250, 0.1));
         transition: all 0.3s ease;
     }
-    .quick-add-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        opacity: 0.9;
+    
+    .kpi-card:hover .kpi-icon {
+        transform: scale(1.1) rotate(5deg);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(96, 165, 250, 0.2));
     }
+    
+    .kpi-card h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0;
+    }
+    
+    [data-bs-theme="dark"] .kpi-card h3 {
+        background: linear-gradient(135deg, #60a5fa, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Chart Cards Enhancement */
+    .chart-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    [data-bs-theme="dark"] .chart-card {
+        background: #2d3338;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .chart-card:hover {
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    .chart-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 2px solid #e9ecef;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    [data-bs-theme="dark"] .chart-card .card-header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3338 100%);
+        border-bottom-color: #374151;
+    }
+    
+    /* Quick Add Cards */
+    .quick-add-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border-left: 4px solid transparent !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    [data-bs-theme="dark"] .quick-add-card {
+        background: linear-gradient(135deg, #2d3338 0%, #1a1a1a 100%);
+    }
+    
+    .quick-add-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.25) !important;
+        border-left-color: #3b82f6 !important;
+    }
+    
+    [data-bs-theme="dark"] .quick-add-card:hover {
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .quick-add-icon {
+        font-size: 3.5rem;
+        color: #3b82f6;
+        transition: all 0.3s ease;
+        filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
+    }
+    
+    .quick-add-card:hover .quick-add-icon {
+        transform: scale(1.15) rotate(5deg);
+        filter: drop-shadow(0 6px 12px rgba(59, 130, 246, 0.5));
+    }
+    
+    .quick-add-after .quick-add-icon {
+        color: #3b82f6;
+    }
+    
+    .quick-add-pre .quick-add-icon {
+        color: #60a5fa;
+    }
+    
+    .quick-add-backtest .quick-add-icon {
+        color: #93c5fd;
+    }
+    
+    .quick-add-card:hover .quick-add-after .quick-add-icon,
+    .quick-add-card:hover .quick-add-pre .quick-add-icon,
+    .quick-add-card:hover .quick-add-backtest .quick-add-icon {
+        animation: pulse 0.6s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        50% { transform: scale(1.2) rotate(10deg); }
+    }
+    
+    .quick-add-card h5 {
+        color: #212529;
+        transition: color 0.3s ease;
+        font-weight: 700;
+    }
+    
+    [data-bs-theme="dark"] .quick-add-card h5 {
+        color: #e9ecef;
+    }
+    
+    .quick-add-card:hover h5 {
+        color: #3b82f6;
+    }
+    
+    [data-bs-theme="dark"] .quick-add-card:hover h5 {
+        color: #60a5fa;
+    }
+    
+    /* Recent Entries Enhancement */
+    .recent-entry-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    [data-bs-theme="dark"] .recent-entry-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    
+    .recent-entry-card:hover {
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    .recent-entry-card .card-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        border: none;
+        padding: 1rem 1.25rem;
+        font-weight: 600;
+    }
+    
+    [data-bs-theme="dark"] .recent-entry-card .card-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    }
+    
+    .recent-entry-card .list-group-item {
+        border: none;
+        padding: 1rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+    
+    .recent-entry-card .list-group-item:hover {
+        background-color: #f8f9fa;
+        padding-left: 1.5rem;
+    }
+    
+    [data-bs-theme="dark"] .recent-entry-card .list-group-item:hover {
+        background-color: #374151;
+    }
+    
+    /* Section Headers */
+    .section-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #3b82f6;
+        display: inline-block;
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .kpi-card, .chart-card, .quick-add-card, .recent-entry-card {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.3s; }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2 fw-bold">
+                <i class="bi bi-speedometer2 me-2"></i>Welcome to Insight Hub
+            </h2>
+            <p class="mb-0 opacity-90">Track, analyze, and improve your trading performance</p>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <div class="display-6 fw-bold">{{ total_entries }}</div>
+            <small class="opacity-75">Total Entries</small>
+        </div>
+    </div>
+</div>
+
 <!-- KPI Cards -->
-<div class="row g-4 mb-4">
+<div class="row g-3 g-md-4 mb-4">
     <div class="col-md-3">
         <div class="card kpi-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-2">Total Entries</h6>
-                        <h3 class="mb-0">{{ total_entries }}</h3>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Total Entries</h6>
+                        <h3 class="mb-1">{{ total_entries }}</h3>
+                        <small class="text-muted">All journals</small>
                     </div>
-                    <div class="text-primary" style="font-size: 2.5rem;">
+                    <div class="kpi-icon text-primary">
                         <i class="bi bi-journal-text"></i>
                     </div>
                 </div>
@@ -37,14 +319,14 @@
     <div class="col-md-3">
         <div class="card kpi-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-2">Win Rate</h6>
-                        <h3 class="mb-0">{{ win_rate }}%</h3>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Win Rate</h6>
+                        <h3 class="mb-1">{{ win_rate }}%</h3>
                         <small class="text-muted">{{ total_trades }} trades</small>
                     </div>
-                    <div class="text-success" style="font-size: 2.5rem;">
-                        <i class="bi bi-trophy"></i>
+                    <div class="kpi-icon text-primary">
+                        <i class="bi bi-trophy-fill"></i>
                     </div>
                 </div>
             </div>
@@ -53,12 +335,13 @@
     <div class="col-md-3">
         <div class="card kpi-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-2">Correct Bias %</h6>
-                        <h3 class="mb-0">{{ correct_bias_pct }}%</h3>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Correct Bias</h6>
+                        <h3 class="mb-1">{{ correct_bias_pct }}%</h3>
+                        <small class="text-muted">Accuracy rate</small>
                     </div>
-                    <div class="text-info" style="font-size: 2.5rem;">
+                    <div class="kpi-icon text-primary">
                         <i class="bi bi-bullseye"></i>
                     </div>
                 </div>
@@ -68,12 +351,13 @@
     <div class="col-md-3">
         <div class="card kpi-card">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-2">Avg POI Score</h6>
-                        <h3 class="mb-0">{{ avg_poi_score|floatformat:1 }}</h3>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Avg POI Score</h6>
+                        <h3 class="mb-1">{{ avg_poi_score|floatformat:1 }}</h3>
+                        <small class="text-muted">Quality metric</small>
                     </div>
-                    <div class="text-warning" style="font-size: 2.5rem;">
+                    <div class="kpi-icon text-primary">
                         <i class="bi bi-star-fill"></i>
                     </div>
                 </div>
@@ -83,202 +367,261 @@
 </div>
 
 <!-- Quick Stats -->
-<div class="row g-4 mb-4">
+<div class="row g-3 g-md-4 mb-4">
     <div class="col-md-6">
         <div class="card kpi-card">
             <div class="card-body">
-                <h6 class="text-muted mb-3">Current Streak</h6>
-                {% if streak_type == 'win' %}
-                    <h2 class="text-success mb-0">{{ streak_abs }} wins <i class="bi bi-fire"></i></h2>
-                {% elif streak_type == 'loss' %}
-                    <h2 class="text-danger mb-0">{{ streak_abs }} losses <i class="bi bi-exclamation-triangle loss-icon"></i></h2>
-                {% else %}
-                    <h2 class="text-muted mb-0">No streak</h2>
-                {% endif %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Current Streak</h6>
+                        {% if streak_type == 'win' %}
+                            <h2 class="text-success mb-0 fw-bold">
+                                {{ streak_abs }} <i class="bi bi-fire-fill"></i>
+                                <small class="fs-6 text-muted">wins</small>
+                            </h2>
+                        {% elif streak_type == 'loss' %}
+                            <h2 class="text-danger mb-0 fw-bold">
+                                {{ streak_abs }} <i class="bi bi-exclamation-triangle-fill loss-icon"></i>
+                                <small class="fs-6 text-muted">losses</small>
+                            </h2>
+                        {% else %}
+                            <h2 class="text-muted mb-0">No streak</h2>
+                        {% endif %}
+                    </div>
+                    <div class="kpi-icon {% if streak_type == 'win' %}text-success{% elif streak_type == 'loss' %}text-danger{% else %}text-muted{% endif %}">
+                        {% if streak_type == 'win' %}
+                            <i class="bi bi-fire"></i>
+                        {% elif streak_type == 'loss' %}
+                            <i class="bi bi-exclamation-triangle"></i>
+                        {% else %}
+                            <i class="bi bi-dash-circle"></i>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card kpi-card">
             <div class="card-body">
-                <h6 class="text-muted mb-3">Last 7 Days Win Rate</h6>
-                <h2 class="mb-0">{{ week_win_rate }}%</h2>
-                <small class="text-muted">Based on recent trades</small>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-2 text-uppercase small fw-bold">Last 7 Days</h6>
+                        <h3 class="mb-1">{{ week_win_rate }}%</h3>
+                        <small class="text-muted">Recent win rate</small>
+                    </div>
+                    <div class="kpi-icon text-primary">
+                        <i class="bi bi-calendar-week"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Charts Row -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Win Rate Over Time</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="winRateChart"></canvas>
+<div class="mb-4">
+    <h4 class="section-header mb-4">
+        <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Performance Analytics
+    </h4>
+    <div class="row g-3 g-md-4">
+        <div class="col-md-6">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Win Rate Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="winRateChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Correct Bias Percentage</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="biasChart"></canvas>
+        <div class="col-md-3">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2"></i>Correct Bias %</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="biasChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Market Condition Frequency</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="marketConditionChart"></canvas>
+        <div class="col-md-3">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Market Condition</h5>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Average POI Quality Score</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="poiChart"></canvas>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="marketConditionChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Add Buttons -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="mb-3">Quick Add</h5>
-                <div class="btn-group" role="group">
-                    <a href="{% url 'after_trade_create' %}" class="btn quick-add-btn" style="background-color: #6c757d; color: white; border-color: #6c757d;">
-                        <i class="bi bi-plus-circle"></i> New After Trade Entry
-                    </a>
-                    <a href="{% url 'pre_trade_create' %}" class="btn quick-add-btn" style="background-color: #856404; color: white; border-color: #856404;">
-                        <i class="bi bi-plus-circle"></i> New Pre Trade Entry
-                    </a>
-                    <a href="{% url 'backtest_create' %}" class="btn quick-add-btn" style="background-color: #5a6268; color: white; border-color: #5a6268;">
-                        <i class="bi bi-plus-circle"></i> New Backtest Entry
-                    </a>
+<!-- Quick Add Section -->
+<div class="mb-4">
+    <h4 class="section-header mb-4">
+        <i class="bi bi-lightning-charge-fill text-primary me-2"></i>Quick Actions
+    </h4>
+    <p class="text-muted mb-4">Create a new journal entry with one click</p>
+    <div class="row g-3 g-md-4 mb-4">
+        <div class="col-md-4">
+            <a href="{% url 'after_trade_create' %}" class="text-decoration-none">
+                <div class="card h-100 quick-add-card quick-add-after shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="quick-add-icon mb-3">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">After Trade</h5>
+                        <p class="text-muted small mb-3">Log completed trades with detailed analysis</p>
+                        <span class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Create Entry
+                        </span>
+                    </div>
                 </div>
-            </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="{% url 'pre_trade_create' %}" class="text-decoration-none">
+                <div class="card h-100 quick-add-card quick-add-pre shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="quick-add-icon mb-3">
+                            <i class="bi bi-eye-fill"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Pre Trade</h5>
+                        <p class="text-muted small mb-3">Plan and document upcoming trade setups</p>
+                        <span class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Create Entry
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="{% url 'backtest_create' %}" class="text-decoration-none">
+                <div class="card h-100 quick-add-card quick-add-backtest shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="quick-add-icon mb-3">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Backtest</h5>
+                        <p class="text-muted small mb-3">Document strategy testing results</p>
+                        <span class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Create Entry
+                        </span>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
 </div>
 
 <!-- Recent Entries -->
-<div class="row g-4">
-    <div class="col-md-4 d-flex">
-        <div class="card w-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent After Trades</h5>
-                <a href="{% url 'after_trade_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="card-body d-flex flex-column">
-                {% if recent_after %}
-                    <ul class="list-group list-group-flush flex-grow-1">
-                        {% for entry in recent_after %}
-                            <li class="list-group-item px-0">
-                                <a href="{% url 'after_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ entry.pair }}</strong><br>
-                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
-                                    </div>
-                                    <span class="badge bg-{% if entry.outcome == 'win' %}success{% else %}danger{% endif %}">
-                                        {{ entry.outcome|upper }}
-                                    </span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state flex-grow-1 mb-0">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="text-muted mb-0 mt-2">No entries yet</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 d-flex">
-        <div class="card w-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Pre Trades</h5>
-                <a href="{% url 'pre_trade_list' %}" class="btn btn-sm btn-outline-success">View All</a>
-            </div>
-            <div class="card-body d-flex flex-column">
-                {% if recent_pre %}
-                    <ul class="list-group list-group-flush flex-grow-1">
-                        {% for entry in recent_pre %}
-                            <li class="list-group-item px-0">
-                                <a href="{% url 'pre_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ entry.pair }}</strong><br>
-                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
-                                    </div>
-                                    <span class="badge bg-{% if entry.trade_taken %}primary{% else %}secondary{% endif %}">
-                                        {% if entry.trade_taken %}Taken{% else %}Not Taken{% endif %}
-                                    </span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state flex-grow-1 mb-0">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="text-muted mb-0 mt-2">No entries yet</p>
-                    </div>
-                {% endif %}
+<div class="mb-4">
+    <h4 class="section-header mb-4">
+        <i class="bi bi-clock-history text-primary me-2"></i>Recent Activity
+    </h4>
+    <div class="row g-3 g-md-4">
+        <div class="col-md-4 d-flex">
+            <div class="card recent-entry-card w-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>After Trades</h5>
+                    <a href="{% url 'after_trade_list' %}" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    {% if recent_after %}
+                        <ul class="list-group list-group-flush flex-grow-1">
+                            {% for entry in recent_after %}
+                                <li class="list-group-item px-0">
+                                    <a href="{% url 'after_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ entry.pair }}</strong><br>
+                                            <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                        </div>
+                                        <span class="badge bg-{% if entry.outcome == 'win' %}primary{% else %}danger{% endif %}">
+                                            {{ entry.outcome|upper }}
+                                        </span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-state flex-grow-1 mb-0">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">No entries yet</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4 d-flex">
-        <div class="card w-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Backtests</h5>
-                <a href="{% url 'backtest_list' %}" class="btn btn-sm btn-outline-info">View All</a>
+        <div class="col-md-4 d-flex">
+            <div class="card recent-entry-card w-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Pre Trades</h5>
+                    <a href="{% url 'pre_trade_list' %}" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    {% if recent_pre %}
+                        <ul class="list-group list-group-flush flex-grow-1">
+                            {% for entry in recent_pre %}
+                                <li class="list-group-item px-0">
+                                    <a href="{% url 'pre_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ entry.pair }}</strong><br>
+                                            <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                        </div>
+                                        <span class="badge bg-{% if entry.trade_taken %}primary{% else %}secondary{% endif %}">
+                                            {% if entry.trade_taken %}Taken{% else %}Not Taken{% endif %}
+                                        </span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-state flex-grow-1 mb-0">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">No entries yet</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body d-flex flex-column">
-                {% if recent_backtest %}
-                    <ul class="list-group list-group-flush flex-grow-1">
-                        {% for entry in recent_backtest %}
-                            <li class="list-group-item px-0">
-                                <a href="{% url 'backtest_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ entry.pair }}</strong><br>
-                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
-                                    </div>
-                                    <span class="badge bg-info">{{ entry.outcome|upper }}</span>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state flex-grow-1 mb-0">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="text-muted mb-0 mt-2">No entries yet</p>
-                    </div>
-                {% endif %}
+        </div>
+        <div class="col-md-4 d-flex">
+            <div class="card recent-entry-card w-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Backtests</h5>
+                    <a href="{% url 'backtest_list' %}" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    {% if recent_backtest %}
+                        <ul class="list-group list-group-flush flex-grow-1">
+                            {% for entry in recent_backtest %}
+                                <li class="list-group-item px-0">
+                                    <a href="{% url 'backtest_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ entry.pair }}</strong><br>
+                                            <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                        </div>
+                                        <span class="badge bg-primary">{{ entry.outcome|upper }}</span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-state flex-grow-1 mb-0">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">No entries yet</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -299,8 +642,8 @@
                 datasets: [{
                     label: 'Win Rate %',
                     data: {{ chart_data.win_rate_values|safe }},
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
                     tension: 0.1
                 }]
             },
@@ -329,7 +672,7 @@
                 labels: ['Correct', 'Incorrect'],
                 datasets: [{
                     data: [correctCount, incorrectCount],
-                    backgroundColor: ['rgb(54, 162, 235)', 'rgb(255, 99, 132)']
+                    backgroundColor: ['rgb(59, 130, 246)', 'rgb(239, 68, 68)']
                 }]
             },
             options: {
@@ -352,7 +695,7 @@
                 datasets: [{
                     label: 'Frequency',
                     data: {{ chart_data.market_condition_counts }},
-                    backgroundColor: ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)']
+                    backgroundColor: ['rgb(59, 130, 246)', 'rgb(16, 185, 129)', 'rgb(251, 191, 36)']
                 }]
             },
             options: {
@@ -375,8 +718,8 @@
                 datasets: [{
                     label: 'Avg POI Score',
                     data: {{ chart_data.poi_avg_scores }},
-                    borderColor: 'rgb(255, 159, 64)',
-                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgb(251, 191, 36)',
+                    backgroundColor: 'rgba(251, 191, 36, 0.2)',
                     tension: 0.1
                 }]
             },
@@ -395,4 +738,3 @@
     }
 </script>
 {% endblock %}
-
