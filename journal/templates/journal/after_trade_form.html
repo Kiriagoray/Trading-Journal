@@ -1,0 +1,204 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}{{ action }} After Trade Entry - Ray's Trading Journal{% endblock %}
+{% block page_title %}{{ action }} After Trade Entry{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 4px solid #3b82f6;
+    }
+    [data-bs-theme="dark"] .form-section {
+        background-color: #2d3338;
+        border-left-color: #60a5fa;
+    }
+    .form-section-title {
+        color: #3b82f6;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #dee2e6;
+    }
+    [data-bs-theme="dark"] .form-section-title {
+        color: #60a5fa;
+        border-bottom-color: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle"></i> {{ action }} After Trade Entry</h5>
+    </div>
+    <div class="card-body">
+        {% if form %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Trade Info Section -->
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-info-circle"></i> Trade Information</h6>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Pair *</label>
+                        {{ form.pair }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Date *</label>
+                        {{ form.date }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Session *</label>
+                        {{ form.session }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Time of Entry *</label>
+                        {{ form.time_of_entry }}
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Bias *</label>
+                        {{ form.bias }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Market Condition *</label>
+                        {{ form.market_condition }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Outcome *</label>
+                        {{ form.outcome }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Analysis Section -->
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-graph-up"></i> Market Analysis</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Liquidity Analysis *</label>
+                        {{ form.liquidity_analysis }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Lower TF Confirmation</label>
+                        {{ form.lower_tf_confirmation }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Predicted Directional Bias</label>
+                        {{ form.predicted_directional_bias }}
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">POI Performance</label>
+                        {{ form.poi_performance }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Market Behaviour</label>
+                        {{ form.market_behaviour }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Entry Quality</label>
+                        {{ form.entry_quality }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Risk & Performance Section -->
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-calculator"></i> Risk & Performance Metrics</h6>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Risk Percentage *</label>
+                        {{ form.risk_percentage }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Risk Pips</label>
+                        {{ form.risk_pips }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Reward Pips</label>
+                        {{ form.reward_pips }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">POI Quality Score (1-5) *</label>
+                        {{ form.poi_quality_score }}
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Discipline Score *</label>
+                        {{ form.discipline_score }}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            <label class="form-check-label fw-bold" for="id_htf_mitigation">HTF Mitigation</label>
+                            {{ form.htf_mitigation }}
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <label class="form-check-label fw-bold" for="id_risk_management_applied">Risk Management Applied</label>
+                            {{ form.risk_management_applied }}
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <label class="form-check-label fw-bold" for="id_high_impact_news">High Impact News</label>
+                            {{ form.high_impact_news }}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-label fw-bold">Major Impact News</label>
+                    {{ form.major_impact_news }}
+                </div>
+            </div>
+            
+            <!-- Images & Notes Section -->
+            <div class="form-section">
+                <h6 class="form-section-title"><i class="bi bi-image"></i> Chart Image & Observations</h6>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Chart Image</label>
+                    {{ form.chart_image }}
+                    {% if entry and entry.chart_image %}
+                        <small class="form-text text-muted">Current: <a href="{{ entry.chart_image.url }}" target="_blank">View</a></small>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="form-label fw-bold">Observations *</label>
+                    {{ form.observations }}
+                </div>
+            </div>
+            
+            <!-- Error Display -->
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Please fix the errors below:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                    <i class="bi bi-save"></i> Save Entry
+                </button>
+                <a href="{% url 'after_trade_list' %}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x"></i> Cancel
+                </a>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-danger">Form not available. Please refresh the page.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

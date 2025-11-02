@@ -1,0 +1,57 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}Lot Size Calculator - Ray's Trading Journal{% endblock %}
+{% block page_title %}Lot Size Calculator{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-calculator"></i> Lot Size Calculator</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="lotCalculatorForm">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Account Balance (USD) *</label>
+                    <input type="number" name="account_balance" class="form-control" step="0.01" required>
+                    <small class="form-text text-muted"><strong>Amount should be in USD</strong></small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Risk Percentage *</label>
+                    <input type="number" name="risk_percentage" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Stop Loss (Pips) *</label>
+                    <input type="number" name="stop_loss_pips" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Instrument *</label>
+                    <select name="instrument" class="form-select" required>
+                        <option value="EUR/USD">EUR/USD</option>
+                        <option value="GBP/USD">GBP/USD</option>
+                        <option value="USD/JPY">USD/JPY</option>
+                        <option value="GBP/JPY">GBP/JPY</option>
+                        <option value="XAU/USD">XAU/USD (Gold)</option>
+                        <option value="BTC/USD">BTC/USD</option>
+                        <option value="ETH/USD">ETH/USD</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calculator"></i> Calculate
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        {% if calculated_lot %}
+        <div class="alert alert-success mt-3">
+            <h5>Calculated Lot Size: <strong>{{ calculated_lot }}</strong></h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('{{ calculated_lot }}')">
+                <i class="bi bi-clipboard"></i> Copy to Clipboard
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

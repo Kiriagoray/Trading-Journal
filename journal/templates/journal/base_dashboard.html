@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ray's Trading Journal{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #EBE2E0;
+            transition: background-color 0.3s ease;
+        }
+        [data-bs-theme="dark"] body {
+            background-color: #1a1a1a;
+        }
+        .sidebar {
+            height: 100vh;
+            background: linear-gradient(180deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        [data-bs-theme="dark"] .sidebar {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+        .sidebar-header {
+            padding: 20px 15px;
+            flex-shrink: 0;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+        [data-bs-theme="dark"] .main-content {
+            background-color: #1a1a1a;
+        }
+        .top-nav {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items-center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        [data-bs-theme="dark"] .top-nav {
+            background: #2d3338;
+            color: #e9ecef;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        [data-bs-theme="dark"] .card {
+            background-color: #2d3338;
+            color: #e9ecef;
+        }
+        [data-bs-theme="dark"] .card-header {
+            background-color: #1e293b;
+            color: #e9ecef;
+            border-bottom: 1px solid #374151;
+        }
+        [data-bs-theme="dark"] .list-group-item {
+            background-color: #2d3338;
+            color: #e9ecef;
+            border-color: #374151;
+        }
+        [data-bs-theme="dark"] .table {
+            color: #e9ecef;
+        }
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: #374151;
+            color: #ffffff !important;
+            border-color: #4b5563;
+        }
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: #374151;
+            color: #ffffff !important;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        }
+        [data-bs-theme="dark"] .form-label,
+        [data-bs-theme="dark"] label {
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+        [data-bs-theme="light"] .form-label,
+        [data-bs-theme="light"] label {
+            color: #212529 !important;
+            font-weight: 500;
+        }
+        [data-bs-theme="dark"] h1,
+        [data-bs-theme="dark"] h2,
+        [data-bs-theme="dark"] h3,
+        [data-bs-theme="dark"] h4,
+        [data-bs-theme="dark"] h5,
+        [data-bs-theme="dark"] h6 {
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] p,
+        [data-bs-theme="dark"] div:not(.badge):not(.btn):not([class*="bg-"]):not([class*="text-"]) {
+            color: #e9ecef !important;
+        }
+        [data-bs-theme="light"] {
+            color: #212529 !important;
+        }
+        /* Red triangle icon for losses - always red */
+        .loss-icon {
+            color: #dc3545 !important;
+        }
+        [data-bs-theme="dark"] .loss-icon {
+            color: #dc3545 !important;
+        }
+        /* Breadcrumb styling */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+        [data-bs-theme="dark"] .breadcrumb-item.active {
+            color: #e9ecef;
+        }
+        /* Tooltip improvements */
+        .tooltip-inner {
+            font-size: 0.875rem;
+        }
+        /* Quick action buttons */
+        .quick-action-btn {
+            transition: all 0.2s ease;
+        }
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Search highlight */
+        .search-highlight {
+            background-color: yellow;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        [data-bs-theme="dark"] .search-highlight {
+            background-color: #ffc107;
+            color: #000;
+        }
+        [data-bs-theme="dark"] .pagination .page-link {
+            background-color: #374151;
+            color: #e9ecef;
+            border-color: #4b5563;
+        }
+        [data-bs-theme="dark"] .pagination .page-item.active .page-link {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .kpi-card {
+            border-left: 4px solid #3b82f6;
+        }
+        [data-bs-theme="dark"] .kpi-card {
+            border-left-color: #60a5fa;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header text-center">
+            <h4 class="text-white mb-0">
+                <i class="bi bi-graph-up-arrow"></i> Ray's Trading Journal
+            </h4>
+        </div>
+        <div class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Command Center
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'after_trade_list' or 'after' in request.path %}active{% endif %}" href="{% url 'after_trade_list' %}">
+                        <i class="bi bi-check-circle"></i> After Trade
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'pre_trade_list' or 'pre' in request.path and 'pre_trade' in request.path %}active{% endif %}" href="{% url 'pre_trade_list' %}">
+                        <i class="bi bi-eye"></i> Pre Trade
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'backtest_list' or 'backtest' in request.path %}active{% endif %}" href="{% url 'backtest_list' %}">
+                        <i class="bi bi-graph-up"></i> Backtesting
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'journal_calendar' or 'calendar' in request.path %}active{% endif %}" href="{% url 'journal_calendar' %}">
+                        <i class="bi bi-calendar3"></i> Calendar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'lot_size_calculator' or 'lot-size' in request.path %}active{% endif %}" href="{% url 'lot_size_calculator' %}">
+                        <i class="bi bi-calculator"></i> Lot Size Calculator
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'trade_comparison' or 'trade-comparison' in request.path %}active{% endif %}" href="{% url 'trade_comparison' %}">
+                        <i class="bi bi-arrows-collapse"></i> Compare Trades
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'error_insights' or 'error-insights' in request.path %}active{% endif %}" href="{% url 'error_insights' %}">
+                        <i class="bi bi-graph-down-arrow"></i> Error Insights
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-link text-white border-0 bg-transparent w-100 text-start" style="padding: 12px 20px;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <div>
+                <button class="btn btn-outline-primary d-md-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h5 class="d-inline ms-2" style="color: inherit; font-weight: 600;">{% block page_title %}Ray's Trading Journal{% endblock %}</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Export Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm dropdown-toggle fw-bold" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        <li><a class="dropdown-item" href="{% url 'after_trade_export_csv' %}"><i class="bi bi-check-circle"></i> Export After Trade</a></li>
+                        <li><a class="dropdown-item" href="{% url 'pre_trade_export_csv' %}"><i class="bi bi-eye"></i> Export Pre Trade</a></li>
+                        <li><a class="dropdown-item" href="{% url 'backtest_export_csv' %}"><i class="bi bi-graph-up"></i> Export Backtest</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-dark btn-sm fw-bold" id="themeToggle" title="Toggle dark mode">
+                    <i class="bi bi-moon-stars"></i> Theme
+                </button>
+                <a href="{% url 'profile' %}" class="btn btn-primary btn-sm fw-bold">
+                    <i class="bi bi-person"></i> Profile
+                </a>
+                <span style="color: inherit !important; font-weight: 600; font-size: 1.05rem;">Hello, {{ user.username }}!</span>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        if (localStorage.getItem('theme') === 'dark') {
+            html.setAttribute('data-bs-theme', 'dark');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            if (html.getAttribute('data-bs-theme') === 'dark') {
+                html.removeAttribute('data-bs-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-bs-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        
+        // Mobile sidebar toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.toggle('show');
+            });
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

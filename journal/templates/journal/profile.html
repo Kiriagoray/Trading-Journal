@@ -1,0 +1,68 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}Profile - Ray's Trading Journal{% endblock %}
+{% block page_title %}Profile{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Account Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="40%">Username:</th>
+                        <td><strong>{{ user.username }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ user.email|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date Joined:</th>
+                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last Login:</th>
+                        <td>{{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Journal Statistics</h5>
+            </div>
+            <div class="card-body">
+                {% with after=user.after_trade_entries.count pre=user.pre_trade_entries.count backtest=user.backtest_entries.count %}
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="40%">After Trade Entries:</th>
+                        <td><strong>{{ after }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Pre Trade Entries:</th>
+                        <td><strong>{{ pre }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Backtest Entries:</th>
+                        <td><strong>{{ backtest }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Total Entries:</th>
+                        <td><strong class="text-primary">
+                            {% widthratio after 1 1 as after_num %}
+                            {% widthratio pre 1 1 as pre_num %}
+                            {% widthratio backtest 1 1 as backtest_num %}
+                            {{ after|add:pre|add:backtest }}
+                        </strong></td>
+                    </tr>
+                </table>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

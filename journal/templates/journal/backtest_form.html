@@ -1,0 +1,177 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}{{ action }} Backtest Entry{% endblock %}
+{% block page_title %}{{ action }} Backtest Entry{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-graph-up"></i> {{ action }} Backtest Entry</h5>
+    </div>
+    <div class="card-body">
+        {% if form %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Basic Info -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2"><i class="bi bi-info-circle"></i> Basic Information</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Pair *</label>
+                    {{ form.pair }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date *</label>
+                    {{ form.date }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">HTF Bias *</label>
+                    {{ form.htf_bias }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Day of Week *</label>
+                    {{ form.day_of_week }}
+                </div>
+            </div>
+            
+            <!-- Market Conditions -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-graph-up"></i> Market Conditions</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Market Condition *</label>
+                    {{ form.market_condition }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Liquidity Analysis *</label>
+                    {{ form.liquidity_analysis }}
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mt-4">
+                        <label class="form-check-label fw-bold" for="id_price_within_htf_poi">Price Within HTF POI</label>
+                        {{ form.price_within_htf_poi }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Structure & Entry -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-diagram-3"></i> Structure & Entry Setup</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Break of Structure (BOS) *</label>
+                    {{ form.lower_tf_bos }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Session Time *</label>
+                    {{ form.session_time }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Entry Time</label>
+                    {{ form.entry_time }}
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_fvg_present">FVG Present</label>
+                        {{ form.fvg_present }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_ifvg">IFVG</label>
+                        {{ form.ifvg }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_retest_into_ob">Retest into OB</label>
+                        {{ form.retest_into_ob }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_setup_present">Setup Present</label>
+                        {{ form.setup_present }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- News & Behavior -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-newspaper"></i> News & Market Behavior</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">High Impact News Day</label>
+                    {{ form.high_impact_news }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Entry Trigger *</label>
+                    {{ form.entry_trigger }}
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Behaviour Based on Previous Moves *</label>
+                {{ form.behaviour_based_on_previous_moves }}
+            </div>
+            
+            <!-- Outcome -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-trophy"></i> Outcome & Notes</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Outcome *</label>
+                    {{ form.outcome }}
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mt-4">
+                        <label class="form-check-label fw-bold" for="id_chasing_long_on">Chasing London</label>
+                        {{ form.chasing_long_on }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mt-4">
+                        <label class="form-check-label fw-bold" for="id_overnight">Overnight</label>
+                        {{ form.overnight }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Screenshot</label>
+                {{ form.screenshot }}
+                {% if entry and entry.screenshot %}
+                    <small class="form-text text-muted">Current: <a href="{{ entry.screenshot.url }}" target="_blank">View</a></small>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Notes</label>
+                {{ form.notes }}
+            </div>
+            
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Please fix the errors below:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-info fw-bold">
+                    <i class="bi bi-save"></i> Save Entry
+                </button>
+                <a href="{% url 'backtest_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x"></i> Cancel
+                </a>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-danger">Form not available. Please refresh the page.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}{{ entry.pair }} - Pre Trade Entry{% endblock %}
+{% block page_title %}Pre Trade Entry{% endblock %}
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+        <h4 class="mb-0">{{ entry.pair }} - {{ entry.date|date:"M d, Y" }}</h4>
+        <div class="btn-group">
+            <a href="{% url 'pre_trade_edit' entry.pk %}" class="btn btn-light btn-sm">Edit</a>
+            <a href="{% url 'pre_trade_delete' entry.pk %}" class="btn btn-light btn-sm">Delete</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3"><strong>Bias:</strong> <span class="badge bg-{% if entry.bias == 'bullish' %}success{% else %}danger{% endif %}">{{ entry.bias|title }}</span></div>
+            <div class="col-md-3"><strong>Trade Taken:</strong> <span class="badge bg-{% if entry.trade_taken %}primary{% else %}secondary{% endif %}">{% if entry.trade_taken %}Yes{% else %}No{% endif %}</span></div>
+            <div class="col-md-3"><strong>Conditions Met:</strong> <span class="badge bg-{% if entry.all_conditions_met %}success{% else %}warning{% endif %}">{% if entry.all_conditions_met %}Yes{% else %}No{% endif %}</span></div>
+            <div class="col-md-3"><strong>Market Condition:</strong> {{ entry.market_condition }}</div>
+        </div>
+        {% if entry.notes %}
+        <div class="mb-3">
+            <strong>Notes:</strong>
+            <p class="mt-2" style="white-space: pre-wrap;">{{ entry.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<a href="{% url 'pre_trade_list' %}" class="btn btn-secondary">Back to List</a>
+{% endblock %}
+

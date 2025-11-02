@@ -1,0 +1,148 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}{{ action }} Pre Trade Entry{% endblock %}
+{% block page_title %}{{ action }} Pre Trade Entry{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-eye"></i> {{ action }} Pre Trade Entry</h5>
+    </div>
+    <div class="card-body">
+        {% if form %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Trade Info Section -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2"><i class="bi bi-info-circle"></i> Trade Information</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Pair *</label>
+                    {{ form.pair }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date *</label>
+                    {{ form.date }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Bias *</label>
+                    {{ form.bias }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Predicted HTF Direction *</label>
+                    {{ form.predicted_htf_direction }}
+                </div>
+            </div>
+            
+            <!-- Market Analysis Section -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-graph-up"></i> Market Analysis</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Market Condition *</label>
+                    {{ form.market_condition }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Liquidity Analysis *</label>
+                    {{ form.liquidity_analysis }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">HTF POI Type *</label>
+                    {{ form.htf_poi_type }}
+                </div>
+            </div>
+            
+            <!-- Session & POI Section -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-clock"></i> Session & POI Details</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Session Target *</label>
+                    {{ form.session_target }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">HTF Draws *</label>
+                    {{ form.htf_draws }}
+                    <small class="form-text text-muted">e.g., Resting London lows, Asian lows, HTF FVG</small>
+                </div>
+            </div>
+            
+            <!-- Lower Timeframe Section -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Lower Timeframe Confirmation *</label>
+                {{ form.lower_tf_confirmation }}
+                <small class="form-text text-muted">e.g., 15M BOS + Retest, 5M BOS + Retest, OB entry</small>
+            </div>
+            
+            <!-- Images Section -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-image"></i> Setup & Outcome Images</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Setup Picture</label>
+                    {{ form.setup_image }}
+                    {% if entry and entry.setup_image %}
+                        <small class="form-text text-muted">Current: <a href="{{ entry.setup_image.url }}" target="_blank">View</a></small>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Outcome Picture</label>
+                    {{ form.outcome_image }}
+                    {% if entry and entry.outcome_image %}
+                        <small class="form-text text-muted">Current: <a href="{{ entry.outcome_image.url }}" target="_blank">View</a></small>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Trade Decision Section -->
+            <h6 class="text-primary mb-3 fw-bold border-bottom pb-2 mt-4"><i class="bi bi-check-circle"></i> Trade Decision</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_all_conditions_met">All Conditions Met</label>
+                        {{ form.all_conditions_met }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <label class="form-check-label fw-bold" for="id_trade_taken">Trade Taken</label>
+                        {{ form.trade_taken }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Reason for Taking or Not Taking Trade *</label>
+                {{ form.reason_for_taking_or_not }}
+            </div>
+            
+            <!-- Notes Section -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Notes</label>
+                {{ form.notes }}
+            </div>
+            
+            <!-- Error Display -->
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Please fix the errors below:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-success fw-bold">
+                    <i class="bi bi-save"></i> Save Entry
+                </button>
+                <a href="{% url 'pre_trade_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x"></i> Cancel
+                </a>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-danger">Form not available. Please refresh the page.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

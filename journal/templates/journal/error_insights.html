@@ -1,0 +1,257 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Error Insights - Ray's Trading Journal{% endblock %}
+{% block page_title %}Error Pattern Detection & Suggestions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .insight-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-left: 4px solid;
+    }
+    .insight-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .severity-critical {
+        border-left-color: #dc3545;
+    }
+    .severity-moderate {
+        border-left-color: #ffc107;
+    }
+    .severity-improving {
+        border-left-color: #28a745;
+    }
+    .stat-badge {
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+    }
+    .suggestion-box {
+        background-color: #f8f9fa;
+        border-left: 3px solid #007bff;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        margin-top: 1rem;
+    }
+    [data-bs-theme="dark"] .suggestion-box {
+        background-color: #2d3338;
+        border-left-color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Introduction -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            <i class="bi bi-graph-down-arrow text-danger"></i> Error Pattern Analysis
+        </h5>
+        <p class="text-muted mb-3">
+            This section automatically analyzes your past trades to highlight recurring mistakes and provide 
+            actionable suggestions for improvement. The insights are generated from your After Trade, Pre Trade, 
+            and Backtesting journal entries.
+        </p>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <span class="badge bg-info">Total Trades Analyzed: {{ total_analyzed }}</span>
+                {% if generated_at %}
+                    <span class="badge bg-secondary ms-2">
+                        Last Updated: {{ generated_at|date:"M d, Y H:i" }}
+                    </span>
+                {% endif %}
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'error_insights' %}" class="btn btn-outline-secondary {% if not time_filter %}active{% endif %}">
+                    All Time
+                </a>
+                <a href="{% url 'error_insights' %}?filter=last_30" class="btn btn-outline-secondary {% if time_filter == 'last_30' %}active{% endif %}">
+                    Last 30 Trades
+                </a>
+                <form method="post" action="{% url 'regenerate_insights' %}{% if time_filter %}?filter={{ time_filter }}{% endif %}" class="d-inline ms-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-clockwise"></i> Regenerate Insights
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Chart -->
+{% if chart_data.labels %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Error Pattern Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="patternChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Error Pattern Cards -->
+{% if insights %}
+    <div class="row g-4 mb-4">
+        {% for insight in insights %}
+            <div class="col-md-6">
+                <div class="card insight-card 
+                    {% if insight.severity_score >= 70 %}severity-critical
+                    {% elif insight.severity_score >= 40 %}severity-moderate
+                    {% else %}severity-improving{% endif %}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% if insight.type == 'market_condition' %}
+                                <i class="bi bi-cloud-rain text-primary"></i>
+                            {% elif insight.type == 'discipline' %}
+                                <i class="bi bi-exclamation-triangle text-warning"></i>
+                            {% elif insight.type == 'bias' %}
+                                <i class="bi bi-arrow-left-right text-info"></i>
+                            {% elif insight.type == 'entry_timing' %}
+                                <i class="bi bi-clock-history text-danger"></i>
+                            {% elif insight.type == 'poi' %}
+                                <i class="bi bi-bullseye text-secondary"></i>
+                            {% elif insight.type == 'session' %}
+                                <i class="bi bi-calendar-event text-success"></i>
+                            {% elif insight.type == 'behavior' %}
+                                <i class="bi bi-graph-down text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle text-primary"></i>
+                            {% endif %}
+                            {{ insight.title }}
+                        </h5>
+                        <span class="badge 
+                            {% if insight.severity_score >= 70 %}bg-danger
+                            {% elif insight.severity_score >= 40 %}bg-warning
+                            {% else %}bg-success{% endif %}">
+                            Severity: {{ insight.severity_score }}%
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">{{ insight.description }}</p>
+                        
+                        <div class="mb-3">
+                            <strong><i class="bi bi-bar-chart"></i> Statistics:</strong>
+                            <div class="stat-badge bg-light text-dark mt-2 d-inline-block">
+                                {{ insight.statistics }}
+                            </div>
+                        </div>
+                        
+                        <div class="suggestion-box">
+                            <strong><i class="bi bi-lightbulb text-warning"></i> Suggestion:</strong>
+                            <p class="mb-0 mt-2">{{ insight.suggestion }}</p>
+                        </div>
+                        
+                        {% if insight.filter_params %}
+                            <div class="mt-3">
+                                <form method="get" action="{% url 'view_related_trades' %}" class="d-inline">
+                                    {% for key, value in insight.filter_params.items %}
+                                        {% if value|length > 1 %}
+                                            {% for v in value %}
+                                                <input type="hidden" name="{{ key }}" value="{{ v }}">
+                                            {% endfor %}
+                                        {% else %}
+                                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-list-ul"></i> View Related Trades
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <h5 class="mt-3 text-muted">No Error Patterns Detected</h5>
+            <p class="text-muted">
+                {% if total_analyzed == 0 %}
+                    Start creating journal entries to generate insights. You need at least 3 trades to detect patterns.
+                {% else %}
+                    Great job! No significant error patterns detected in your recent trading. Keep maintaining good discipline!
+                {% endif %}
+            </p>
+            {% if total_analyzed == 0 %}
+                <a href="/journal/after/create/" class="btn btn-primary mt-2">
+                    <i class="bi bi-plus-circle"></i> Create Your First Trade Entry
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% if chart_data.labels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('patternChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.labels|safe }},
+                datasets: [{
+                    label: 'Pattern Count',
+                    data: {{ chart_data.counts }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}
+

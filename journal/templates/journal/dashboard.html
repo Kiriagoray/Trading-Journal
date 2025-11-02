@@ -1,0 +1,398 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Command Center - Ray's Trading Journal{% endblock %}
+{% block page_title %}Command Center{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quick-add-btn {
+        transition: all 0.3s ease;
+    }
+    .quick-add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Total Entries</h6>
+                        <h3 class="mb-0">{{ total_entries }}</h3>
+                    </div>
+                    <div class="text-primary" style="font-size: 2.5rem;">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Win Rate</h6>
+                        <h3 class="mb-0">{{ win_rate }}%</h3>
+                        <small class="text-muted">{{ total_trades }} trades</small>
+                    </div>
+                    <div class="text-success" style="font-size: 2.5rem;">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Correct Bias %</h6>
+                        <h3 class="mb-0">{{ correct_bias_pct }}%</h3>
+                    </div>
+                    <div class="text-info" style="font-size: 2.5rem;">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Avg POI Score</h6>
+                        <h3 class="mb-0">{{ avg_poi_score|floatformat:1 }}</h3>
+                    </div>
+                    <div class="text-warning" style="font-size: 2.5rem;">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Current Streak</h6>
+                {% if streak_type == 'win' %}
+                    <h2 class="text-success mb-0">{{ streak_abs }} wins <i class="bi bi-fire"></i></h2>
+                {% elif streak_type == 'loss' %}
+                    <h2 class="text-danger mb-0">{{ streak_abs }} losses <i class="bi bi-exclamation-triangle loss-icon"></i></h2>
+                {% else %}
+                    <h2 class="text-muted mb-0">No streak</h2>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Last 7 Days Win Rate</h6>
+                <h2 class="mb-0">{{ week_win_rate }}%</h2>
+                <small class="text-muted">Based on recent trades</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Win Rate Over Time</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Correct Bias Percentage</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="biasChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Market Condition Frequency</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="marketConditionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Average POI Quality Score</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="poiChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Buttons -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3">Quick Add</h5>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'after_trade_create' %}" class="btn quick-add-btn" style="background-color: #6c757d; color: white; border-color: #6c757d;">
+                        <i class="bi bi-plus-circle"></i> New After Trade Entry
+                    </a>
+                    <a href="{% url 'pre_trade_create' %}" class="btn quick-add-btn" style="background-color: #856404; color: white; border-color: #856404;">
+                        <i class="bi bi-plus-circle"></i> New Pre Trade Entry
+                    </a>
+                    <a href="{% url 'backtest_create' %}" class="btn quick-add-btn" style="background-color: #5a6268; color: white; border-color: #5a6268;">
+                        <i class="bi bi-plus-circle"></i> New Backtest Entry
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Entries -->
+<div class="row g-4">
+    <div class="col-md-4 d-flex">
+        <div class="card w-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent After Trades</h5>
+                <a href="{% url 'after_trade_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body d-flex flex-column">
+                {% if recent_after %}
+                    <ul class="list-group list-group-flush flex-grow-1">
+                        {% for entry in recent_after %}
+                            <li class="list-group-item px-0">
+                                <a href="{% url 'after_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ entry.pair }}</strong><br>
+                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-{% if entry.outcome == 'win' %}success{% else %}danger{% endif %}">
+                                        {{ entry.outcome|upper }}
+                                    </span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state flex-grow-1 mb-0">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0 mt-2">No entries yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card w-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Pre Trades</h5>
+                <a href="{% url 'pre_trade_list' %}" class="btn btn-sm btn-outline-success">View All</a>
+            </div>
+            <div class="card-body d-flex flex-column">
+                {% if recent_pre %}
+                    <ul class="list-group list-group-flush flex-grow-1">
+                        {% for entry in recent_pre %}
+                            <li class="list-group-item px-0">
+                                <a href="{% url 'pre_trade_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ entry.pair }}</strong><br>
+                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-{% if entry.trade_taken %}primary{% else %}secondary{% endif %}">
+                                        {% if entry.trade_taken %}Taken{% else %}Not Taken{% endif %}
+                                    </span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state flex-grow-1 mb-0">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0 mt-2">No entries yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card w-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Backtests</h5>
+                <a href="{% url 'backtest_list' %}" class="btn btn-sm btn-outline-info">View All</a>
+            </div>
+            <div class="card-body d-flex flex-column">
+                {% if recent_backtest %}
+                    <ul class="list-group list-group-flush flex-grow-1">
+                        {% for entry in recent_backtest %}
+                            <li class="list-group-item px-0">
+                                <a href="{% url 'backtest_detail' entry.pk %}" class="text-decoration-none text-reset d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ entry.pair }}</strong><br>
+                                        <small class="text-muted">{{ entry.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-info">{{ entry.outcome|upper }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state flex-grow-1 mb-0">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0 mt-2">No entries yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Win Rate Over Time Chart
+    const winRateCtx = document.getElementById('winRateChart');
+    if (winRateCtx) {
+        new Chart(winRateCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.win_rate_weeks|safe }},
+                datasets: [{
+                    label: 'Win Rate %',
+                    data: {{ chart_data.win_rate_values|safe }},
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                }
+            }
+        });
+    }
+
+    // Correct Bias Chart
+    const biasCtx = document.getElementById('biasChart');
+    if (biasCtx) {
+        const correctCount = {{ correct_bias_pct|default:0 }};
+        const incorrectCount = 100 - correctCount;
+        new Chart(biasCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Incorrect'],
+                datasets: [{
+                    data: [correctCount, incorrectCount],
+                    backgroundColor: ['rgb(54, 162, 235)', 'rgb(255, 99, 132)']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    // Market Condition Chart
+    const marketCtx = document.getElementById('marketConditionChart');
+    if (marketCtx) {
+        new Chart(marketCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_data.market_conditions|safe }},
+                datasets: [{
+                    label: 'Frequency',
+                    data: {{ chart_data.market_condition_counts }},
+                    backgroundColor: ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // POI Quality Score Chart
+    const poiCtx = document.getElementById('poiChart');
+    if (poiCtx) {
+        new Chart(poiCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.poi_months|safe }},
+                datasets: [{
+                    label: 'Avg POI Score',
+                    data: {{ chart_data.poi_avg_scores }},
+                    borderColor: 'rgb(255, 159, 64)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 5 }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
+

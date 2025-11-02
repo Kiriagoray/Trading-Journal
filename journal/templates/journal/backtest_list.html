@@ -1,0 +1,151 @@
+{% extends 'journal/base_dashboard.html' %}
+{% block title %}Backtest Entries - Ray's Trading Journal{% endblock %}
+{% block page_title %}Backtest Entries{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Command Center</a></li>
+        <li class="breadcrumb-item active">Backtesting Journal</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3><i class="bi bi-graph-up"></i> Backtesting Journal</h3>
+        <small class="text-muted">Total: {{ page_obj.paginator.count }} entries</small>
+    </div>
+    <a href="{% url 'backtest_create' %}" class="btn btn-primary btn-lg fw-bold quick-action-btn" title="Create new backtest entry">
+        <i class="bi bi-plus-circle"></i> New Entry
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-funnel"></i> Filters</h5></div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Pair</label>
+                <input type="text" name="pair" class="form-control form-control-sm" placeholder="e.g., EURUSD">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">HTF Bias</label>
+                <select name="htf_bias" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="bullish">Bullish</option>
+                    <option value="bearish">Bearish</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Outcome</label>
+                <select name="outcome" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="win">Win</option>
+                    <option value="loss">Loss</option>
+                    <option value="no_setup">No Setup</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Date From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search...">
+            </div>
+            <div class="col-md-12 d-flex align-items-end gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary fw-bold">
+                    <i class="bi bi-search"></i> Apply Filters
+                </button>
+                <a href="{% url 'backtest_list' %}" class="btn btn-outline-secondary fw-bold">Clear</a>
+                <a href="{% url 'backtest_export_csv' %}" class="btn btn-success fw-bold">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Pair</th>
+                        <th>HTF Bias</th>
+                        <th>Day</th>
+                        <th>Outcome</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in page_obj %}
+                        <tr onclick="window.location='{% url 'backtest_detail' entry.pk %}'" style="cursor: pointer;">
+                            <td>{{ entry.date|date:"M d, Y" }}</td>
+                            <td><strong>{{ entry.pair }}</strong></td>
+                            <td>
+                                <span class="badge bg-{% if entry.htf_bias == 'bullish' %}success{% else %}danger{% endif %}">
+                                    {{ entry.htf_bias|title }}
+                                </span>
+                            </td>
+                            <td>{{ entry.day_of_week }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ entry.outcome|upper }}</span>
+                            </td>
+                            <td onclick="event.stopPropagation();">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'backtest_detail' entry.pk %}" class="btn btn-outline-primary" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'backtest_edit' entry.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'backtest_delete' entry.pk %}" class="btn btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <h5>No entries found</h5>
+                                <p class="text-muted">{% if request.GET %}Try adjusting your filters or{% else %}Start by{% endif %} <a href="{% url 'backtest_create' %}" class="btn btn-primary btn-sm mt-2">creating your first entry</a></p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

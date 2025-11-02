@@ -1,0 +1,161 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Compare Trades - Ray's Trading Journal{% endblock %}
+{% block page_title %}Compare Trades{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-arrows-collapse"></i> Select Trades to Compare</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Trade 1</label>
+                <select name="trade1" class="form-select" required>
+                    <option value="">Select first trade...</option>
+                    {% for trade in all_trades %}
+                        <option value="{{ trade.pk }}" {% if trade1 and trade1.pk == trade.pk %}selected{% endif %}>
+                            {{ trade.pair }} - {{ trade.date|date:"M d, Y" }} - {{ trade.outcome|upper }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Trade 2</label>
+                <select name="trade2" class="form-select" required>
+                    <option value="">Select second trade...</option>
+                    {% for trade in all_trades %}
+                        <option value="{{ trade.pk }}" {% if trade2 and trade2.pk == trade.pk %}selected{% endif %}>
+                            {{ trade.pair }} - {{ trade.date|date:"M d, Y" }} - {{ trade.outcome|upper }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Compare
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if trade1 and trade2 %}
+<div class="row g-4">
+    <!-- Trade 1 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Trade 1: {{ trade1.pair }} - {{ trade1.date|date:"M d, Y" }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tr><th>Pair</th><td>{{ trade1.pair }}</td></tr>
+                        <tr><th>Date</th><td>{{ trade1.date|date:"M d, Y" }}</td></tr>
+                        <tr><th>Outcome</th><td><span class="badge bg-{% if trade1.outcome == 'win' %}success{% else %}danger{% endif %}">{{ trade1.outcome|upper }}</span></td></tr>
+                        <tr><th>Bias</th><td><span class="badge bg-{% if trade1.bias == 'bullish' %}success{% else %}danger{% endif %}">{{ trade1.bias|title }}</span></td></tr>
+                        <tr><th>Session</th><td>{{ trade1.session }}</td></tr>
+                        <tr><th>Market Condition</th><td>{{ trade1.market_condition }}</td></tr>
+                        <tr><th>POI Score</th><td>{{ trade1.poi_quality_score }}/5</td></tr>
+                        <tr><th>RR Ratio</th><td>{% if trade1.rr_ratio %}{{ trade1.rr_ratio }}:1{% else %}N/A{% endif %}</td></tr>
+                        <tr><th>Entry Quality</th><td>{{ trade1.entry_quality|title }}</td></tr>
+                        <tr><th>Discipline Score</th><td>{{ trade1.discipline_score|title }}</td></tr>
+                    </table>
+                </div>
+                {% if trade1.chart_image %}
+                    <div class="mt-3">
+                        <img src="{{ trade1.chart_image.url }}" class="img-fluid rounded" alt="Chart">
+                    </div>
+                {% endif %}
+                <div class="mt-3">
+                    <a href="{% url 'after_trade_detail' trade1.pk %}" class="btn btn-sm btn-outline-primary">
+                        View Full Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trade 2 -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Trade 2: {{ trade2.pair }} - {{ trade2.date|date:"M d, Y" }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tr><th>Pair</th><td>{{ trade2.pair }}</td></tr>
+                        <tr><th>Date</th><td>{{ trade2.date|date:"M d, Y" }}</td></tr>
+                        <tr><th>Outcome</th><td><span class="badge bg-{% if trade2.outcome == 'win' %}success{% else %}danger{% endif %}">{{ trade2.outcome|upper }}</span></td></tr>
+                        <tr><th>Bias</th><td><span class="badge bg-{% if trade2.bias == 'bullish' %}success{% else %}danger{% endif %}">{{ trade2.bias|title }}</span></td></tr>
+                        <tr><th>Session</th><td>{{ trade2.session }}</td></tr>
+                        <tr><th>Market Condition</th><td>{{ trade2.market_condition }}</td></tr>
+                        <tr><th>POI Score</th><td>{{ trade2.poi_quality_score }}/5</td></tr>
+                        <tr><th>RR Ratio</th><td>{% if trade2.rr_ratio %}{{ trade2.rr_ratio }}:1{% else %}N/A{% endif %}</td></tr>
+                        <tr><th>Entry Quality</th><td>{{ trade2.entry_quality|title }}</td></tr>
+                        <tr><th>Discipline Score</th><td>{{ trade2.discipline_score|title }}</td></tr>
+                    </table>
+                </div>
+                {% if trade2.chart_image %}
+                    <div class="mt-3">
+                        <img src="{{ trade2.chart_image.url }}" class="img-fluid rounded" alt="Chart">
+                    </div>
+                {% endif %}
+                <div class="mt-3">
+                    <a href="{% url 'after_trade_detail' trade2.pk %}" class="btn btn-sm btn-outline-info">
+                        View Full Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Highlights -->
+<div class="card mt-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Key Differences</h5>
+    </div>
+    <div class="card-body">
+        <ul class="list-group">
+            <li class="list-group-item">
+                <strong>Outcome:</strong> 
+                Trade 1: <span class="badge bg-{% if trade1.outcome == 'win' %}success{% else %}danger{% endif %}">{{ trade1.outcome|upper }}</span> 
+                vs 
+                Trade 2: <span class="badge bg-{% if trade2.outcome == 'win' %}success{% else %}danger{% endif %}">{{ trade2.outcome|upper }}</span>
+            </li>
+            {% if trade1.poi_quality_score != trade2.poi_quality_score %}
+            <li class="list-group-item">
+                <strong>POI Quality Score:</strong> 
+                Trade 1: {{ trade1.poi_quality_score }}/5 vs Trade 2: {{ trade2.poi_quality_score }}/5
+                {% if trade1.outcome == 'win' and trade2.outcome == 'loss' %}
+                    <span class="badge bg-success ms-2">Higher POI score correlated with win</span>
+                {% endif %}
+            </li>
+            {% endif %}
+            {% if trade1.rr_ratio and trade2.rr_ratio %}
+                {% if trade1.rr_ratio != trade2.rr_ratio %}
+                <li class="list-group-item">
+                    <strong>RR Ratio:</strong> 
+                    Trade 1: {{ trade1.rr_ratio }}:1 vs Trade 2: {{ trade2.rr_ratio }}:1
+                </li>
+                {% endif %}
+            {% endif %}
+            {% if trade1.discipline_score != trade2.discipline_score %}
+            <li class="list-group-item">
+                <strong>Discipline Score:</strong> 
+                Trade 1: {{ trade1.discipline_score|title }} vs Trade 2: {{ trade2.discipline_score|title }}
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% elif trade1 or trade2 %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Please select both trades to compare.
+</div>
+{% endif %}
+{% endblock %}
