@@ -89,12 +89,18 @@ Built with modern web technologies to ensure reliability, performance, and maint
    python manage.py migrate
    ```
 
-6. Create a superuser account:
+6. Collect static files (required for production, recommended for development):
+   ```bash
+   python manage.py collectstatic --noinput
+   ```
+   This collects all static files including CSS, JavaScript, images, and favicons into the `staticfiles` directory for serving in production.
+
+7. Create a superuser account:
    ```bash
    python manage.py createsuperuser
    ```
 
-7. Start the development server:
+8. Start the development server:
    ```bash
    python manage.py runserver
    ```
