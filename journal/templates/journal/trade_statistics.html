@@ -1,0 +1,220 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Trade Statistics - JournalX{% endblock %}
+{% block page_title %}Trade Statistics{% endblock %}
+
+{% block content %}
+{% include 'journal/includes/breadcrumbs.html' with current_page='Statistics' %}
+
+<!-- Overall Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Total Trades</h6>
+                <h2 class="text-primary mb-0">{{ total_trades }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Win Rate</h6>
+                <h2 class="text-success mb-0">{{ win_rate }}%</h2>
+                <small class="text-muted">{{ wins }}W / {{ losses }}L</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Profit Factor</h6>
+                <h2 class="text-info mb-0">{{ profit_factor }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Max Win Streak</h6>
+                <h2 class="text-success mb-0">{{ max_win_streak }}</h2>
+                <small class="text-muted">Max Loss: {{ max_loss_streak }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Metrics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Best & Worst Trades</h5>
+            </div>
+            <div class="card-body">
+                {% if best_trade %}
+                <div class="mb-3">
+                    <strong class="text-success">Best Trade (by RR):</strong>
+                    <p class="mb-1">{{ best_trade.pair }} - {{ best_trade.date|date:"M d, Y" }}</p>
+                    <p class="mb-0"><span class="badge bg-success">RR: {{ best_trade.rr_ratio|floatformat:2 }}:1</span></p>
+                </div>
+                {% endif %}
+                {% if worst_trade %}
+                <div>
+                    <strong class="text-danger">Worst Trade (by RR):</strong>
+                    <p class="mb-1">{{ worst_trade.pair }} - {{ worst_trade.date|date:"M d, Y" }}</p>
+                    <p class="mb-0"><span class="badge bg-danger">RR: {{ worst_trade.rr_ratio|floatformat:2 }}:1</span></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Average Pips</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <strong class="text-success">Avg Win</strong>
+                        <p class="h4 mb-0">{{ avg_win_pips }} pips</p>
+                    </div>
+                    <div class="col-6">
+                        <strong class="text-danger">Avg Loss</strong>
+                        <p class="h4 mb-0">{{ avg_loss_pips }} pips</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Per Pair Stats -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-currency-exchange me-2"></i>Performance by Pair</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Total</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pair, stats in pair_stats.items %}
+                    <tr>
+                        <td><strong>{{ pair }}</strong></td>
+                        <td>{{ stats.total }}</td>
+                        <td class="text-success">{{ stats.wins }}</td>
+                        <td class="text-danger">{{ stats.losses }}</td>
+                        <td>
+                            <span class="badge bg-{% if stats.win_rate >= 50 %}success{% else %}danger{% endif %}">
+                                {{ stats.win_rate|floatformat:1 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No trades recorded yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Per Session Stats -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Performance by Session</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Session</th>
+                        <th>Total</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session, stats in session_stats.items %}
+                    <tr>
+                        <td><strong>{{ session }}</strong></td>
+                        <td>{{ stats.total }}</td>
+                        <td class="text-success">{{ stats.wins }}</td>
+                        <td class="text-danger">{{ stats.losses }}</td>
+                        <td>
+                            <span class="badge bg-{% if stats.win_rate >= 50 %}success{% else %}danger{% endif %}">
+                                {{ stats.win_rate|floatformat:1 }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No trades recorded yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Stats -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-calendar-month me-2"></i>Monthly Performance</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month_key, stats in monthly_stats.items %}
+                    <tr>
+                        <td><strong>{{ month_key }}</strong></td>
+                        <td>{{ stats.total }}</td>
+                        <td class="text-success">{{ stats.wins }}</td>
+                        <td class="text-danger">{{ stats.losses }}</td>
+                        <td>
+                            {% if stats.total > 0 %}
+                            <span class="badge bg-{% if stats.win_rate >= 50 %}success{% else %}danger{% endif %}">
+                                {{ stats.win_rate|floatformat:1 }}%
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No monthly data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

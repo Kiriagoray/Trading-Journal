@@ -1,6 +1,7 @@
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views
+from . import api_views
 
 urlpatterns = [
     # Root redirect to dashboard
@@ -11,6 +12,22 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', auth_views.LoginView.as_view(template_name='journal/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('password_reset/', auth_views.PasswordResetView.as_view(
+        template_name='journal/password_reset.html',
+        email_template_name='journal/password_reset_email.html',
+        subject_template_name='journal/password_reset_subject.txt',
+        success_url='/password_reset/done/'
+    ), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='journal/password_reset_done.html'
+    ), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='journal/password_reset_confirm.html',
+        success_url='/reset/done/'
+    ), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='journal/password_reset_complete.html'
+    ), name='password_reset_complete'),
     
     # After Trade URLs
     path('journal/after/', views.after_trade_list, name='after_trade_list'),
@@ -54,5 +71,17 @@ urlpatterns = [
     
     # Profile
     path('profile/', views.profile, name='profile'),
+    
+    # New Features
+    path('search/', views.global_search, name='global_search'),
+    path('statistics/', views.trade_statistics, name='trade_statistics'),
+    path('journal/after/<int:pk>/duplicate/', views.duplicate_trade, name='duplicate_trade'),
+    path('templates/', views.trade_templates, name='trade_templates'),
+    path('templates/<int:template_id>/use/', views.use_template, name='use_template'),
+    path('settings/', views.settings_page, name='settings'),
+    
+    # API Endpoints
+    path('api/dropdown-choices/', api_views.api_dropdown_choices, name='api_dropdown_choices'),
+    path('api/dropdown-choices/<str:category_name>/', api_views.api_dropdown_category, name='api_dropdown_category'),
 ]
 

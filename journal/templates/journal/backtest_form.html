@@ -1,6 +1,7 @@
 {% extends 'journal/base_dashboard.html' %}
+{% load journal_extras %}
 
-{% block title %}{{ action }} Backtest Entry - Ray's Trading Journal{% endblock %}
+{% block title %}{{ action }} Backtest Entry - JournalX{% endblock %}
 {% block page_title %}{{ action }} Backtest Entry{% endblock %}
 
 {% block breadcrumbs %}
@@ -252,6 +253,25 @@
                 <label class="form-label fw-bold">Notes</label>
                 {{ form.notes }}
             </div>
+            
+            <!-- Dynamic Fields Section -->
+            {% get_dynamic_fields form as dynamic_fields %}
+            {% if dynamic_fields %}
+                <div class="form-section">
+                    <h6 class="form-section-title"><i class="bi bi-plus-circle"></i> Additional Fields</h6>
+                    <div class="row g-3">
+                        {% for field_name, field in dynamic_fields %}
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold" for="id_{{ field_name }}">{{ field.label|default:field_name|title }}</label>
+                                {{ form|get_field:field_name }}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
             
             {% if form.errors %}
                 <div class="alert alert-danger">

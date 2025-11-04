@@ -245,18 +245,28 @@ class BacktestEntry(models.Model):
 
 class ChoiceCategory(models.Model):
     """Category for grouping choices"""
+    JOURNAL_TYPE_CHOICES = [
+        ('after_trade', 'After Trade'),
+        ('pre_trade', 'Pre Trade'),
+        ('backtest', 'Backtest'),
+        ('all', 'All Journals'),
+    ]
+    
     name = models.CharField(max_length=50, unique=True, help_text='Internal name (e.g., session, market_condition)')
     display_name = models.CharField(max_length=100, help_text='Display name (e.g., Trading Session)')
     description = models.TextField(blank=True, help_text='Description of this category')
+    journal_type = models.CharField(max_length=20, choices=JOURNAL_TYPE_CHOICES, default='all', help_text='Which journal type this category belongs to')
+    field_name = models.CharField(max_length=50, blank=True, help_text='Form field name to map this category to (e.g., session, bias). Leave blank for dynamic fields.')
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0, help_text='Display order')
     
     class Meta:
         verbose_name_plural = 'Choice Categories'
-        ordering = ['order', 'display_name']
+        ordering = ['journal_type', 'order', 'display_name']
     
     def __str__(self):
-        return self.display_name
+        journal_label = dict(self.JOURNAL_TYPE_CHOICES).get(self.journal_type, self.journal_type)
+        return f"{self.display_name} ({journal_label})"
 
 
 class ChoiceOption(models.Model):
@@ -318,4 +328,59 @@ class LotSizeCalculation(models.Model):
 
     def __str__(self):
         return f"{self.instrument} - {self.calculated_lot_size} lots ({self.created_at.date()})"
+
+
+class CommonMistakeLog(models.Model):
+    """Model for tracking common user mistakes"""
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.CharField(max_length=50, choices=[
+        ('entry', 'Entry Mistakes'),
+        ('exit', 'Exit Mistakes'),
+        ('risk', 'Risk Management'),
+        ('psychology', 'Psychology'),
+        ('analysis', 'Market Analysis'),
+        ('other', 'Other'),
+    ], default='other')
+    frequency_count = models.IntegerField(default=1, help_text='How many times this mistake has been observed')
+    severity = models.CharField(max_length=20, choices=[
+        ('critical', 'Critical'),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ], default='medium')
+    suggested_solution = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='logged_mistakes')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-frequency_count', '-created_at']
+        verbose_name = 'Common Mistake'
+        verbose_name_plural = 'Common Mistakes'
+    
+    def __str__(self):
+        return f"{self.title} ({self.frequency_count}x)"
+
+
+class TradeTemplate(models.Model):
+    """Template for quick trade entry creation"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trade_templates')
+    name = models.CharField(max_length=100, help_text='Template name')
+    pair = models.CharField(max_length=20, blank=True)
+    session = models.CharField(max_length=20, blank=True)
+    bias = models.CharField(max_length=10, blank=True)
+    market_condition = models.CharField(max_length=20, blank=True)
+    liquidity_analysis = models.CharField(max_length=50, blank=True)
+    risk_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
 

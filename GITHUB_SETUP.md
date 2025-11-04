@@ -4,7 +4,7 @@
 
 1. **Go to GitHub and create a new repository:**
    - Visit: https://github.com/new
-   - Repository name: `rays-trading-journal` (or your preferred name)
+   - Repository name: `journalx` (or your preferred name)
    - Description: "Professional Django trading journal with AI features"
    - Choose: **Public** or **Private**
    - **DO NOT** initialize with README, .gitignore, or license (we already have these)
@@ -14,7 +14,7 @@
    Run these commands (replace `YOUR_USERNAME` with your GitHub username):
 
    ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/rays-trading-journal.git
+   git remote add origin https://github.com/YOUR_USERNAME/journalx.git
    git branch -M main
    git push -u origin main
    ```
@@ -38,7 +38,7 @@ If you're asked for credentials:
 ### Creating a Personal Access Token:
 1. Go to: https://github.com/settings/tokens
 2. Click "Generate new token" → "Generate new token (classic)"
-3. Give it a name like "Trading Journal Project"
+3. Give it a name like "JournalX Project"
 4. Select scopes: Check `repo` (full control of private repositories)
 5. Click "Generate token"
 6. **Copy the token immediately** (you won't see it again)

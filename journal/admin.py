@@ -2,16 +2,28 @@ from django.contrib import admin
 from .models import (
     AfterTradeEntry, PreTradeEntry, BacktestEntry, 
     StrategyTag, FilterPreset, LotSizeCalculation,
-    ChoiceCategory, ChoiceOption
+    ChoiceCategory, ChoiceOption, CommonMistakeLog, TradeTemplate
 )
 
 
 @admin.register(ChoiceCategory)
 class ChoiceCategoryAdmin(admin.ModelAdmin):
-    list_display = ['display_name', 'name', 'is_active', 'order']
-    list_filter = ['is_active']
-    search_fields = ['name', 'display_name']
-    ordering = ['order', 'display_name']
+    list_display = ['display_name', 'name', 'journal_type', 'field_name', 'is_active', 'order']
+    list_filter = ['journal_type', 'is_active']
+    search_fields = ['name', 'display_name', 'field_name']
+    ordering = ['journal_type', 'order', 'display_name']
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'display_name', 'description')
+        }),
+        ('Journal Configuration', {
+            'fields': ('journal_type', 'field_name'),
+            'description': 'Select which journal type this category belongs to. If field_name is set, it will map to that specific form field. Leave field_name blank to create a new dynamic field.'
+        }),
+        ('Display Settings', {
+            'fields': ('is_active', 'order')
+        }),
+    )
 
 
 @admin.register(ChoiceOption)
@@ -103,4 +115,44 @@ class LotSizeCalculationAdmin(admin.ModelAdmin):
     list_filter = ['instrument', 'created_at', 'user']
     search_fields = ['user__username', 'instrument']
     readonly_fields = ['created_at']
+
+
+@admin.register(CommonMistakeLog)
+class CommonMistakeLogAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'severity', 'frequency_count', 'created_by', 'is_active', 'created_at']
+    list_filter = ['category', 'severity', 'is_active', 'created_at']
+    search_fields = ['title', 'description', 'suggested_solution']
+    list_editable = ['is_active', 'severity']
+    fieldsets = (
+        ('Mistake Info', {
+            'fields': ('title', 'description', 'category', 'severity')
+        }),
+        ('Tracking', {
+            'fields': ('frequency_count', 'is_active', 'created_by')
+        }),
+        ('Solution', {
+            'fields': ('suggested_solution',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def get_queryset(self, request):
+        """Restrict to superusers or allow all"""
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # Non-superusers can only see their own mistakes
+            qs = qs.filter(created_by=request.user)
+        return qs
+
+
+@admin.register(TradeTemplate)
+class TradeTemplateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'user', 'pair', 'session', 'created_at']
+    list_filter = ['user', 'created_at']
+    search_fields = ['name', 'pair', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']
 

@@ -110,25 +110,60 @@ class Command(BaseCommand):
                     ('loss', 'Loss', 2),
                 ]
             },
+            'pair': {
+                'display_name': 'Currency Pair',
+                'description': 'Trading currency pairs',
+                'journal_type': 'all',
+                'field_name': 'pair',
+                'options': [
+                    ('AUD/JPY', 'AUD/JPY', 0),
+                    ('AUD/USD', 'AUD/USD', 1),
+                    ('EUR/AUD', 'EUR/AUD', 2),
+                    ('EUR/CAD', 'EUR/CAD', 3),
+                    ('EUR/GBP', 'EUR/GBP', 4),
+                    ('EUR/JPY', 'EUR/JPY', 5),
+                    ('EUR/USD', 'EUR/USD', 6),
+                    ('GBP/CHF', 'GBP/CHF', 7),
+                    ('GBP/JPY', 'GBP/JPY', 8),
+                    ('GBP/USD', 'GBP/USD', 9),
+                    ('NZD/USD', 'NZD/USD', 10),
+                    ('USD/CAD', 'USD/CAD', 11),
+                    ('USD/CHF', 'USD/CHF', 12),
+                    ('USD/JPY', 'USD/JPY', 13),
+                    ('USD/HKD', 'USD/HKD', 14),
+                    ('USD/SGD', 'USD/SGD', 15),
+                    ('USD/TRY', 'USD/TRY', 16),
+                    ('USD/ZAR', 'USD/ZAR', 17),
+                    ('XAU/USD', 'XAU/USD (Gold)', 18),
+                ]
+            },
         }
         
         created_count = 0
         updated_count = 0
         
         for category_name, category_info in categories_data.items():
+            defaults = {
+                'display_name': category_info['display_name'],
+                'description': category_info['description'],
+                'is_active': True,
+                'order': len([c for c in categories_data.keys() if list(categories_data.keys()).index(c) < list(categories_data.keys()).index(category_name)]),
+                'journal_type': category_info.get('journal_type', 'all'),
+                'field_name': category_info.get('field_name', ''),
+            }
+            
             category, created = ChoiceCategory.objects.get_or_create(
                 name=category_name,
-                defaults={
-                    'display_name': category_info['display_name'],
-                    'description': category_info['description'],
-                    'is_active': True,
-                    'order': len([c for c in categories_data.keys() if list(categories_data.keys()).index(c) < list(categories_data.keys()).index(category_name)])
-                }
+                defaults=defaults
             )
             
             if not created:
                 category.display_name = category_info['display_name']
                 category.description = category_info['description']
+                if 'journal_type' in category_info:
+                    category.journal_type = category_info['journal_type']
+                if 'field_name' in category_info:
+                    category.field_name = category_info['field_name']
                 category.save()
                 updated_count += 1
             else:

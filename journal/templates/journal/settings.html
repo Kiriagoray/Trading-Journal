@@ -1,0 +1,66 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Settings - JournalX{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+{% include 'journal/includes/breadcrumbs.html' with current_page='Settings' %}
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-gear me-2"></i>Account Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                        <small class="text-muted">Username cannot be changed</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ user.email|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name|default:'' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name|default:'' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Account Info</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Date Joined:</strong><br>
+                    {{ user.date_joined|date:"F d, Y" }}
+                </div>
+                <div class="mb-3">
+                    <strong>Last Login:</strong><br>
+                    {{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}
+                </div>
+                <hr>
+                <a href="{% url 'password_reset' %}" class="btn btn-outline-warning w-100">
+                    <i class="bi bi-key me-2"></i>Change Password
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

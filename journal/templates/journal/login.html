@@ -1,11 +1,11 @@
 {% extends 'journal/base.html' %}
-{% block title %}Login - Ray's Trading Journal{% endblock %}
+{% block title %}Login - JournalX{% endblock %}
 {% block content %}
 <div class="auth-card">
     <div class="auth-header">
         <div class="brand-logo">
             <i class="bi bi-graph-up-arrow brand-icon"></i>
-            <h2>Ray's Trading Journal</h2>
+            <h2>JournalX</h2>
         </div>
         <div class="auth-icon">
             <i class="bi bi-box-arrow-in-right"></i>
@@ -56,6 +56,16 @@
                 </label>
             </div>
             
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">Remember me</label>
+                </div>
+                <a href="{% url 'password_reset' %}" class="forgot-password-link">
+                    <i class="bi bi-key me-1"></i>Forgot Password?
+                </a>
+            </div>
+            
             <button type="submit" class="btn btn-auth w-100 text-white">
                 <i class="bi bi-box-arrow-in-right me-2"></i>
                 Sign In
@@ -68,6 +78,11 @@
             Don't have an account? 
             <a href="{% url 'register' %}">
                 <i class="bi bi-person-plus me-1"></i>Create Account
+            </a>
+        </p>
+        <p class="mt-2">
+            <a href="{% url 'password_reset' %}" class="forgot-password-footer-link">
+                <i class="bi bi-key me-1"></i>Forgot your password?
             </a>
         </p>
     </div>
@@ -87,6 +102,15 @@
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
         }, 100);
+        
+        // Set flag for login animation when form is submitted
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function() {
+                // Set sessionStorage flag to show welcome animation on dashboard
+                sessionStorage.setItem('showWelcomeAnimation', 'true');
+            });
+        }
     });
 </script>
 {% endblock %}

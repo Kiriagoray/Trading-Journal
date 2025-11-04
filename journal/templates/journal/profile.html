@@ -1,5 +1,5 @@
 {% extends 'journal/base_dashboard.html' %}
-{% block title %}Profile - Ray's Trading Journal{% endblock %}
+{% block title %}Profile - JournalX{% endblock %}
 {% block page_title %}Profile{% endblock %}
 
 {% block breadcrumbs %}
@@ -34,28 +34,35 @@
                     </div>
                 </div>
                 
-                <table class="table table-borderless">
-                    <tbody>
-                        <tr class="py-3">
-                            <th width="35%" class="ps-0">
-                                <i class="bi bi-envelope me-2 text-primary"></i>Email:
-                            </th>
-                            <td class="fw-semibold">{{ user.email|default:"Not provided" }}</td>
-                        </tr>
-                        <tr class="py-3">
-                            <th width="35%" class="ps-0">
-                                <i class="bi bi-calendar-event me-2 text-primary"></i>Date Joined:
-                            </th>
-                            <td class="fw-semibold">{{ user.date_joined|date:"F d, Y" }}</td>
-                        </tr>
-                        <tr class="py-3">
-                            <th width="35%" class="ps-0">
-                                <i class="bi bi-clock-history me-2 text-primary"></i>Last Login:
-                            </th>
-                            <td class="fw-semibold">{{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="credentials-section">
+                    <div class="credential-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-envelope me-3 text-primary" style="font-size: 1.2rem; min-width: 30px;"></i>
+                            <div class="flex-grow-1">
+                                <div class="text-muted small mb-1">Email</div>
+                                <div class="fw-semibold">{{ user.email|default:"Not provided" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="credential-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-calendar-event me-3 text-primary" style="font-size: 1.2rem; min-width: 30px;"></i>
+                            <div class="flex-grow-1">
+                                <div class="text-muted small mb-1">Date Joined</div>
+                                <div class="fw-semibold">{{ user.date_joined|date:"F d, Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="credential-item mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock-history me-3 text-primary" style="font-size: 1.2rem; min-width: 30px;"></i>
+                            <div class="flex-grow-1">
+                                <div class="text-muted small mb-1">Last Login</div>
+                                <div class="fw-semibold">{{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

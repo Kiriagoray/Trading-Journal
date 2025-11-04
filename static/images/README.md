@@ -1,6 +1,6 @@
 # Favicon Files
 
-This directory contains the favicon files for Ray's Trading Journal application.
+This directory contains the favicon files for JournalX application.
 
 ## Current Favicon
 

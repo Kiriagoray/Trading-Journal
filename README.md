@@ -1,4 +1,4 @@
-# Ray's Trading Journal - Pro Trading Journal Web Application
+# JournalX - Pro Trading Journal Web Application
 
 A comprehensive Django-based trading journal application with advanced analytics, AI-powered insights, and professional dashboard interface.
 
@@ -13,13 +13,20 @@ A comprehensive Django-based trading journal application with advanced analytics
 
 ### Advanced Features
 - **Dashboard/Command Center**: KPIs, charts, and quick stats
+- **Global Search**: Search across all journal types (After Trade, Pre Trade, Backtest)
+- **Trade Statistics**: Comprehensive analytics with performance by pair, session, and monthly breakdown
+- **Trade Templates**: Save and reuse common trade setups for quick entry
+- **Trade Duplication**: Duplicate trades with one click
 - **Trade Comparison Tool**: Side-by-side comparison of any two trades
 - **Lot Size Calculator**: Calculate position sizes for Deriv broker
 - **Calendar View**: Visual calendar of all trading activity
 - **Daily Summary**: Comprehensive daily trade review
 - **CSV Export**: Export journal data for external analysis
 - **Advanced Filtering**: Filter by pair, date, session, bias, outcome, and more
-- **Strategy Tagging**: Tag trades for better organization (if needed)
+- **Strategy Tagging**: Tag trades for better organization
+- **User Settings**: Manage account preferences and profile
+- **Password Reset**: Email-based password recovery
+- **Dynamic Dropdowns**: Admin-managed dropdown options via Django admin
 
 ### User Experience
 - **Responsive Design**: Works on desktop, tablet, and mobile
@@ -64,7 +71,7 @@ A comprehensive Django-based trading journal application with advanced analytics
 
 3. **Install dependencies**
    ```bash
-   pip install django pillow
+   pip install -r requirements.txt
    ```
 
 4. **Run migrations**
@@ -203,4 +210,4 @@ For issues or questions, please check the code comments or create an issue in th
 
 ## Author
 
-Ray's Trading Journal - Built for professional traders
+JournalX - Built for professional traders

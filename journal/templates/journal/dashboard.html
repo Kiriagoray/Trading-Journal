@@ -1,10 +1,388 @@
 {% extends 'journal/base_dashboard.html' %}
 
-{% block title %}Insight Hub - Ray's Trading Journal{% endblock %}
+{% block title %}Insight Hub - JournalX{% endblock %}
 {% block page_title %}Insight Hub{% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Login Animation Overlay */
+    .login-animation-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        animation: fadeOut 1.5s ease-in-out 2.5s forwards;
+    }
+    
+    [data-bs-theme="light"] .login-animation-overlay {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .animation-container {
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+    
+    .logo-animation {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: logoPulse 1.5s ease-in-out infinite;
+        filter: drop-shadow(0 0 20px rgba(0, 255, 176, 0.5));
+    }
+    
+    .logo-animation i {
+        background: linear-gradient(135deg, #00ffb0, #00e6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: inline-block;
+    }
+    
+    .welcome-text {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        animation: slideInDown 0.8s ease-out;
+        background: linear-gradient(135deg, #00ffb0, #00e6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .subtitle-text {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        animation: slideInUp 0.8s ease-out 0.3s both;
+    }
+    
+    .graph-animation {
+        position: absolute;
+        width: 100%;
+        height: 200px;
+        bottom: -100px;
+        left: 0;
+        opacity: 0.3;
+        overflow: hidden;
+    }
+    
+    .graph-line {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00ffb0, transparent);
+        animation: graphMove 2s ease-in-out infinite;
+    }
+    
+    .graph-line:nth-child(2) {
+        top: 50px;
+        animation-delay: 0.5s;
+        background: linear-gradient(90deg, transparent, #00e6ff, transparent);
+    }
+    
+    .graph-line:nth-child(3) {
+        top: 100px;
+        animation-delay: 1s;
+    }
+    
+    .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+    }
+    
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #00ffb0;
+        border-radius: 50%;
+        animation: float 3s ease-in-out infinite;
+        opacity: 0.6;
+    }
+    
+    .particle:nth-child(2n) {
+        background: #00e6ff;
+        animation-delay: 0.5s;
+    }
+    
+    .particle:nth-child(3n) {
+        animation-delay: 1s;
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            visibility: visible;
+        }
+        to {
+            opacity: 0;
+            visibility: hidden;
+        }
+    }
+    
+    @keyframes logoPulse {
+        0%, 100% {
+            transform: scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 20px rgba(0, 255, 176, 0.5));
+        }
+        50% {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 0 30px rgba(0, 255, 176, 0.8));
+        }
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes graphMove {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0) translateX(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.6;
+        }
+        90% {
+            opacity: 0.6;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(50px);
+            opacity: 0;
+        }
+    }
+    
+    /* Dashboard content - only animate on login, not on navigation */
+    .dashboard-content {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    /* Only apply animation delays when login animation is shown */
+    .dashboard-content.login-animation-active {
+        opacity: 0;
+        animation: fadeInContent 0.8s ease-out 3s forwards;
+    }
+    
+    @keyframes fadeInContent {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Staggered animation for dashboard elements - only when login animation active */
+    .dashboard-content.login-animation-active .dashboard-header {
+        animation: fadeInUp 0.8s ease-out 3.2s both;
+    }
+    
+    .dashboard-content.login-animation-active .kpi-card:nth-child(1) { animation-delay: 3.4s !important; }
+    .dashboard-content.login-animation-active .kpi-card:nth-child(2) { animation-delay: 3.5s !important; }
+    .dashboard-content.login-animation-active .kpi-card:nth-child(3) { animation-delay: 3.6s !important; }
+    .dashboard-content.login-animation-active .kpi-card:nth-child(4) { animation-delay: 3.7s !important; }
+    
+    .dashboard-content.login-animation-active .chart-card {
+        animation: fadeInUp 0.8s ease-out 3.8s both;
+    }
+    
+    .dashboard-content.login-animation-active .quick-add-card {
+        animation: fadeInUp 0.8s ease-out 4s both;
+    }
+    
+    .dashboard-content.login-animation-active .recent-entry-card {
+        animation: fadeInUp 0.8s ease-out 4.2s both;
+    }
+    
+    /* Dashboard Post-Load Animation */
+    .dashboard-pulse-effect {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-pulse-effect::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(59, 130, 246, 0.3), 
+            transparent
+        );
+        animation: shimmer 3s ease-in-out 4.5s;
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    @keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+        100% {
+            left: 100%;
+        }
+    }
+    
+    /* KPI Card Number Animation */
+    .kpi-card h3,
+    .kpi-card h2 {
+        position: relative;
+    }
+    
+    .kpi-card h3::after,
+    .kpi-card h2::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, 
+            rgba(59, 130, 246, 0.1), 
+            rgba(96, 165, 250, 0.1)
+        );
+        animation: numberGlow 2s ease-in-out 4.5s;
+        pointer-events: none;
+        border-radius: 8px;
+    }
+    
+    @keyframes numberGlow {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    }
+    
+    /* Chart Loading Animation */
+    .chart-card .chart-container {
+        position: relative;
+    }
+    
+    .chart-card .chart-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(59, 130, 246, 0.1) 50%,
+            transparent 70%
+        );
+        animation: chartLoad 2.5s ease-in-out 4.8s;
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    @keyframes chartLoad {
+        0% {
+            transform: translateX(-100%) translateY(-100%);
+        }
+        100% {
+            transform: translateX(100%) translateY(100%);
+        }
+    }
+    
+    /* Quick Add Card Pulse */
+    .quick-add-card {
+        position: relative;
+    }
+    
+    .quick-add-card::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.2);
+        transform: translate(-50%, -50%);
+        animation: cardPulse 2s ease-out 5s;
+        pointer-events: none;
+    }
+    
+    @keyframes cardPulse {
+        0% {
+            width: 0;
+            height: 0;
+            opacity: 0.8;
+        }
+        100% {
+            width: 300px;
+            height: 300px;
+            opacity: 0;
+        }
+    }
+    
+    /* Stats Counter Animation */
+    .stat-number {
+        display: inline-block;
+    }
+    
+    .stat-number.animate {
+        animation: statBounce 0.6s ease-out;
+    }
+    
+    @keyframes statBounce {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.2);
+        }
+    }
+    
     /* Modern Dashboard Styling */
     .dashboard-header {
         background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
@@ -80,11 +458,19 @@
     .kpi-card h3 {
         font-size: 2rem;
         font-weight: 700;
-        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 0;
+    }
+    
+    /* More intense blue for light mode - stronger visibility */
+    [data-bs-theme="light"] .kpi-card h3 {
+        background: linear-gradient(135deg, #1e40af, #1e3a8a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
     [data-bs-theme="dark"] .kpi-card h3 {
@@ -92,6 +478,55 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+    }
+    
+    /* Light mode text visibility improvements */
+    [data-bs-theme="light"] .text-muted {
+        color: #495057 !important;
+    }
+    
+    [data-bs-theme="light"] .kpi-card .text-muted {
+        color: #495057 !important;
+        font-weight: 500;
+    }
+    
+    [data-bs-theme="light"] .kpi-card small.text-muted {
+        color: #6c757d !important;
+        font-weight: 400;
+    }
+    
+    /* Better contrast for dark text in light mode */
+    [data-bs-theme="light"] .card-body {
+        color: #212529;
+    }
+    
+    [data-bs-theme="light"] .card-body strong {
+        color: #000000;
+        font-weight: 600;
+    }
+    
+    /* Section headers more visible */
+    [data-bs-theme="light"] .section-header {
+        color: #212529;
+        border-bottom-color: #1e40af;
+    }
+    
+    /* More intense blue for icons and primary elements in light mode */
+    [data-bs-theme="light"] .text-primary {
+        color: #1e40af !important;
+    }
+    
+    [data-bs-theme="light"] .kpi-icon.text-primary {
+        color: #1e40af !important;
+        background: linear-gradient(135deg, rgba(30, 64, 175, 0.15), rgba(30, 58, 138, 0.15));
+    }
+    
+    /* Intense blue for stat numbers */
+    [data-bs-theme="light"] .stat-number {
+        background: linear-gradient(135deg, #1e40af, #1e3a8a) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
     }
     
     /* Chart Cards Enhancement */
@@ -282,6 +717,34 @@
 {% endblock %}
 
 {% block content %}
+<!-- Login Animation Overlay -->
+<div class="login-animation-overlay" id="loginAnimation">
+    <div class="animation-container">
+        <div class="particles">
+            <div class="particle" style="left: 10%; top: 20%;"></div>
+            <div class="particle" style="left: 30%; top: 40%;"></div>
+            <div class="particle" style="left: 50%; top: 60%;"></div>
+            <div class="particle" style="left: 70%; top: 30%;"></div>
+            <div class="particle" style="left: 90%; top: 50%;"></div>
+            <div class="particle" style="left: 20%; top: 70%;"></div>
+            <div class="particle" style="left: 60%; top: 10%;"></div>
+            <div class="particle" style="left: 80%; top: 80%;"></div>
+        </div>
+        <div class="logo-animation">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <h1 class="welcome-text">Welcome Back!</h1>
+        <p class="subtitle-text">Loading your trading insights...</p>
+        <div class="graph-animation">
+            <div class="graph-line"></div>
+            <div class="graph-line"></div>
+            <div class="graph-line"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="dashboard-content">
 <!-- Dashboard Header -->
 <div class="dashboard-header">
     <div class="d-flex justify-content-between align-items-center">
@@ -292,8 +755,8 @@
             <p class="mb-0 opacity-90">Track, analyze, and improve your trading performance</p>
         </div>
         <div class="text-end d-none d-md-block">
-            <div class="display-6 fw-bold">{{ total_entries }}</div>
-            <small class="opacity-75">Total Entries</small>
+            <div class="display-6 fw-bold" style="color: #1e40af;">{{ total_entries }}</div>
+            <small class="opacity-90" style="color: rgba(255,255,255,0.9);">Total Entries</small>
         </div>
     </div>
 </div>
@@ -306,7 +769,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-2 text-uppercase small fw-bold">Total Entries</h6>
-                        <h3 class="mb-1">{{ total_entries }}</h3>
+                        <h3 class="mb-1 stat-number" id="stat-total">{{ total_entries }}</h3>
                         <small class="text-muted">All journals</small>
                     </div>
                     <div class="kpi-icon text-primary">
@@ -322,7 +785,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-2 text-uppercase small fw-bold">Win Rate</h6>
-                        <h3 class="mb-1">{{ win_rate }}%</h3>
+                        <h3 class="mb-1 stat-number" id="stat-winrate">{{ win_rate }}%</h3>
                         <small class="text-muted">{{ total_trades }} trades</small>
                     </div>
                     <div class="kpi-icon text-primary">
@@ -338,7 +801,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-2 text-uppercase small fw-bold">Correct Bias</h6>
-                        <h3 class="mb-1">{{ correct_bias_pct }}%</h3>
+                        <h3 class="mb-1 stat-number" id="stat-bias">{{ correct_bias_pct }}%</h3>
                         <small class="text-muted">Accuracy rate</small>
                     </div>
                     <div class="kpi-icon text-primary">
@@ -354,7 +817,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-2 text-uppercase small fw-bold">Avg POI Score</h6>
-                        <h3 class="mb-1">{{ avg_poi_score|floatformat:1 }}</h3>
+                        <h3 class="mb-1 stat-number" id="stat-poi">{{ avg_poi_score|floatformat:1 }}</h3>
                         <small class="text-muted">Quality metric</small>
                     </div>
                     <div class="kpi-icon text-primary">
@@ -407,7 +870,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-2 text-uppercase small fw-bold">Last 7 Days</h6>
-                        <h3 class="mb-1">{{ week_win_rate }}%</h3>
+                        <h3 class="mb-1 stat-number" id="stat-weekwinrate">{{ week_win_rate }}%</h3>
                         <small class="text-muted">Recent win rate</small>
                     </div>
                     <div class="kpi-icon text-primary">
@@ -626,12 +1089,111 @@
         </div>
     </div>
 </div>
+</div>
+<!-- End Dashboard Content -->
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Login Animation and Dashboard Effects
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we should show the welcome animation (only after login)
+        const showWelcomeAnimation = sessionStorage.getItem('showWelcomeAnimation');
+        const referrer = document.referrer;
+        const isLoginRedirect = showWelcomeAnimation === 'true' || 
+                                (referrer && (referrer.includes('/login/') || referrer.includes('/register/')));
+        
+        const overlay = document.getElementById('loginAnimation');
+        
+        const dashboardContent = document.querySelector('.dashboard-content');
+        
+        if (overlay) {
+            if (isLoginRedirect) {
+                // Show animation - user just logged in
+                overlay.style.display = 'flex';
+                // Add class to enable animation delays
+                if (dashboardContent) {
+                    dashboardContent.classList.add('login-animation-active');
+                }
+                // Remove flag so it doesn't show again
+                sessionStorage.removeItem('showWelcomeAnimation');
+                
+                // Remove animation overlay after it fades out
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 4000); // Remove after animation completes
+            } else {
+                // Hide animation immediately - user navigated from another page
+                overlay.style.display = 'none';
+                // Show dashboard content immediately (no delay, no animation class)
+                if (dashboardContent) {
+                    dashboardContent.style.opacity = '1';
+                    dashboardContent.style.transform = 'translateY(0)';
+                    dashboardContent.style.animation = 'none';
+                    dashboardContent.classList.remove('login-animation-active');
+                }
+            }
+        } else if (dashboardContent) {
+            // No overlay, ensure content is visible immediately
+            dashboardContent.style.opacity = '1';
+            dashboardContent.style.transform = 'translateY(0)';
+            dashboardContent.classList.remove('login-animation-active');
+        }
+        
+        // Dashboard Post-Load Animation Sequence (only if welcome animation was shown)
+        const animationDelay = isLoginRedirect ? 4500 : 100; // Start immediately if no welcome animation
+        
+        setTimeout(() => {
+            // Animate stat numbers with bounce effect
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach((stat, index) => {
+                setTimeout(() => {
+                    stat.classList.add('animate');
+                    setTimeout(() => {
+                        stat.classList.remove('animate');
+                    }, 600);
+                }, index * 150);
+            });
+            
+            // Add pulse effect to KPI icons
+            const kpiIcons = document.querySelectorAll('.kpi-icon');
+            kpiIcons.forEach((icon, index) => {
+                setTimeout(() => {
+                    icon.style.transform = 'scale(1.15) rotate(5deg)';
+                    icon.style.transition = 'transform 0.3s ease';
+                    setTimeout(() => {
+                        icon.style.transform = '';
+                    }, 300);
+                }, 500 + (index * 100));
+            });
+            
+            // Animate quick add cards
+            const quickAddCards = document.querySelectorAll('.quick-add-card');
+            quickAddCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.transform = 'translateY(-5px) scale(1.02)';
+                    card.style.transition = 'transform 0.4s ease';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                    }, 400);
+                }, 800 + (index * 150));
+            });
+            
+            // Add subtle glow to dashboard header
+            const dashboardHeader = document.querySelector('.dashboard-header');
+            if (dashboardHeader) {
+                setTimeout(() => {
+                    dashboardHeader.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4)';
+                    dashboardHeader.style.transition = 'box-shadow 0.5s ease';
+                    setTimeout(() => {
+                        dashboardHeader.style.boxShadow = '';
+                    }, 1000);
+                }, 1200);
+            }
+        }, animationDelay); // Start after login animation completes (or immediately if no animation)
+    });
     // Win Rate Over Time Chart
     const winRateCtx = document.getElementById('winRateChart');
     if (winRateCtx) {

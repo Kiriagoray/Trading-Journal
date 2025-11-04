@@ -1,0 +1,163 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Global Search - JournalX{% endblock %}
+{% block page_title %}Global Search{% endblock %}
+
+{% block content %}
+{% include 'journal/includes/breadcrumbs.html' with current_page='Global Search' %}
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-search me-2"></i>Search All Journals</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{% url 'global_search' %}" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control form-control-lg" 
+                       placeholder="Search by pair, notes, observations, strategy..." 
+                       value="{{ query }}" required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </form>
+        
+        {% if query %}
+            <div class="alert alert-info">
+                <strong>Search Results for:</strong> "{{ query }}"
+            </div>
+            
+            {% if after_trades or pre_trades or backtests %}
+                <!-- After Trades -->
+                {% if after_trades %}
+                <div class="mb-4">
+                    <h6 class="text-primary mb-3"><i class="bi bi-check-circle me-2"></i>After Trade Entries ({{ after_trades|length }})</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Pair</th>
+                                    <th>Session</th>
+                                    <th>Outcome</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in after_trades %}
+                                <tr>
+                                    <td>{{ trade.date|date:"M d, Y" }}</td>
+                                    <td><strong>{{ trade.pair }}</strong></td>
+                                    <td>{{ trade.session }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if trade.outcome == 'win' %}primary{% else %}danger{% endif %}">
+                                            {{ trade.outcome|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'after_trade_detail' trade.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Pre Trades -->
+                {% if pre_trades %}
+                <div class="mb-4">
+                    <h6 class="text-info mb-3"><i class="bi bi-eye me-2"></i>Pre Trade Entries ({{ pre_trades|length }})</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Pair</th>
+                                    <th>Bias</th>
+                                    <th>Trade Taken</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in pre_trades %}
+                                <tr>
+                                    <td>{{ trade.date|date:"M d, Y" }}</td>
+                                    <td><strong>{{ trade.pair }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if trade.bias == 'bullish' %}primary{% else %}danger{% endif %}">
+                                            {{ trade.bias|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if trade.trade_taken %}success{% else %}secondary{% endif %}">
+                                            {% if trade.trade_taken %}Taken{% else %}Not Taken{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'pre_trade_detail' trade.pk %}" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Backtests -->
+                {% if backtests %}
+                <div class="mb-4">
+                    <h6 class="text-success mb-3"><i class="bi bi-graph-up me-2"></i>Backtest Entries ({{ backtests|length }})</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Pair</th>
+                                    <th>Outcome</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in backtests %}
+                                <tr>
+                                    <td>{{ trade.date|date:"M d, Y" }}</td>
+                                    <td><strong>{{ trade.pair }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if trade.outcome == 'win' %}primary{% else %}danger{% endif %}">
+                                            {{ trade.outcome|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'backtest_detail' trade.pk %}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>No results found for "{{ query }}"
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-search" style="font-size: 3rem;"></i>
+                <p class="mt-3">Enter a search term above to find entries across all journals</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
