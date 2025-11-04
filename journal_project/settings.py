@@ -85,9 +85,34 @@ WSGI_APPLICATION = 'journal_project.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Use environment variables to switch between SQLite (dev) and PostgreSQL (production)
-USE_POSTGRESQL = os.environ.get('USE_POSTGRESQL', 'False').lower() == 'true'
+# Auto-detect DATABASE_URL (provided by Railway, Render, Heroku, etc.)
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if USE_POSTGRESQL:
+if DATABASE_URL:
+    # Parse DATABASE_URL (format: postgresql://user:password@host:port/dbname)
+    import re
+    db_match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', DATABASE_URL)
+    if db_match:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': db_match.group(5),
+                'USER': db_match.group(1),
+                'PASSWORD': db_match.group(2),
+                'HOST': db_match.group(3),
+                'PORT': db_match.group(4),
+            }
+        }
+    else:
+        # Fallback to SQLite if DATABASE_URL format is invalid
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+elif os.environ.get('USE_POSTGRESQL', 'False').lower() == 'true':
+    # Manual PostgreSQL configuration via individual env vars
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -99,6 +124,7 @@ if USE_POSTGRESQL:
         }
     }
 else:
+    # Default to SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
