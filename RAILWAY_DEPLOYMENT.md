@@ -31,21 +31,27 @@ Railway is the easiest platform to deploy JournalX. This guide will walk you thr
 3. Railway will automatically create a PostgreSQL database
 4. **Important:** Note the connection details (you'll need them)
 
-### Step 4: Configure Environment Variables
+### Step 4: Link PostgreSQL to Web Service
 
-1. Click on your **Django service** (the web service)
-2. Go to the **"Variables"** tab
-3. Click **"+ New Variable"**
-4. Add the following variables one by one:
+1. In your project dashboard, you should see both services (PostgreSQL and Web)
+2. Click on your **Web Service**
+3. Go to **"Variables"** tab
+4. Railway should automatically add `DATABASE_URL` - **verify it's there!**
+5. If not, click **"+ New Variable"** and Railway will show you the database connection variables
+
+**Note:** Our app automatically detects `DATABASE_URL`, so you don't need to set individual DB variables!
+
+### Step 5: Configure Environment Variables
+
+1. Still in **"Variables"** tab of your Web Service
+2. Click **"+ New Variable"**
+3. Add these variables:
 
 ```bash
 # Security
 SECRET_KEY=<generate-using-command-below>
 DEBUG=False
 ALLOWED_HOSTS=*.railway.app,yourdomain.com
-
-# Database (Railway auto-provides these, but add for safety)
-USE_POSTGRESQL=True
 
 # Email (use your Gmail credentials)
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
@@ -57,6 +63,8 @@ EMAIL_HOST_PASSWORD=bvbkonsxbzzcvcwf
 DEFAULT_FROM_EMAIL=teamjournalx@gmail.com
 ```
 
+**Note:** `DATABASE_URL` is automatically added by Railway when you link PostgreSQL - no need to set it manually!
+
 **To generate SECRET_KEY:**
 Run this command locally:
 ```bash
@@ -65,7 +73,7 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 
 Or use this online tool: https://djecrety.ir/
 
-### Step 5: Add Build Command and Start Command
+### Step 6: Configure Build and Start Commands
 
 Railway usually auto-detects Django, but verify:
 
@@ -75,7 +83,7 @@ Railway usually auto-detects Django, but verify:
 
 If gunicorn isn't in requirements, we'll add it.
 
-### Step 6: Deploy
+### Step 7: Deploy
 
 1. Railway will automatically start building and deploying
 2. Watch the build logs - you should see:
@@ -84,7 +92,7 @@ If gunicorn isn't in requirements, we'll add it.
    - Starting the server
 3. Wait for "Deployed successfully" message
 
-### Step 7: Run Migrations
+### Step 8: Run Migrations
 
 1. Go to your service dashboard
 2. Click on the **"Deployments"** tab
@@ -100,7 +108,7 @@ Alternatively, you can add migrations to the start command:
 python manage.py migrate && gunicorn journal_project.wsgi --bind 0.0.0.0:$PORT
 ```
 
-### Step 8: Create Superuser
+### Step 9: Create Superuser
 
 1. In Railway dashboard, go to your service
 2. Click **"Variables"** → Look for **"Deploy Command"** or use **"Shell"**
@@ -109,13 +117,13 @@ python manage.py migrate && gunicorn journal_project.wsgi --bind 0.0.0.0:$PORT
    railway run python manage.py createsuperuser
    ```
 
-### Step 9: Access Your Application
+### Step 10: Access Your Application
 
 1. Railway will provide a URL like: `https://your-app-name.railway.app`
 2. Click on the URL or find it in the **"Settings"** → **"Domains"**
 3. Your app should be live!
 
-### Step 10: Custom Domain (Optional)
+### Step 11: Custom Domain (Optional)
 
 1. Go to **"Settings"** → **"Domains"**
 2. Click **"Custom Domain"**
@@ -135,8 +143,9 @@ We need to add `gunicorn` for production. I'll update requirements.txt now.
 
 ### Database Connection Errors
 - Verify PostgreSQL service is running
-- Check database environment variables are set
-- Ensure `USE_POSTGRESQL=True`
+- Check that `DATABASE_URL` is automatically set by Railway
+- If not, manually link the PostgreSQL service to your web service
+- The app auto-detects `DATABASE_URL` - no manual DB config needed!
 
 ### Static Files Not Loading
 - Add to start command: `python manage.py collectstatic --noinput`
