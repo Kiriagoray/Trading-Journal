@@ -45,7 +45,7 @@ Complete guide to deploy JournalX on Render.
    - **Branch:** `main`
    - **Root Directory:** (leave empty)
    - **Runtime:** Python 3
-   - **Build Command:** `pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput`
+   - **Build Command:** `pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_admin`
    - **Start Command:** `gunicorn journal_project.wsgi --bind 0.0.0.0:$PORT`
    - **Environment:** Python 3
    - **Python Version:** 3.11
@@ -91,6 +91,19 @@ Value: `bvbkonsxbzzcvcwf`
 **DEFAULT_FROM_EMAIL**
 Value: `teamjournalx@gmail.com`
 
+**DJANGO_SUPERUSER_USERNAME** (Optional)
+Value: `admin` (or your preferred admin username)
+- If not set, defaults to "admin"
+
+**DJANGO_SUPERUSER_EMAIL** (Optional)
+Value: `admin@example.com` (or your admin email)
+- If not set, defaults to "admin@example.com"
+
+**DJANGO_SUPERUSER_PASSWORD** (Optional)
+Value: Your secure admin password
+- If not set, defaults to "admin123"
+- **Important:** Change this to a strong password in production!
+
 ### Step 5: Deploy
 
 1. Click "Create Web Service"
@@ -108,12 +121,11 @@ python manage.py createsuperuser
 ```
 4. Follow the prompts to create your admin account
 
-### Step 7: Access Your Application
-
 1. Render provides a URL: `https://journalx.onrender.com` (or your service name)
 2. Your app is now live!
+3. Log in to admin at: `https://journalx.onrender.com/admin/`
 
-### Step 8: Custom Domain (Optional)
+### Step 7: Custom Domain (Optional)
 
 1. Go to "Settings" → "Custom Domains"
 2. Add your domain name
