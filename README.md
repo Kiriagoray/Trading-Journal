@@ -1,187 +1,167 @@
-# JournalX - Pro Trading Journal Web Application
+# JournalX
 
-A comprehensive Django-based trading journal application with advanced analytics, AI-powered insights, and professional dashboard interface.
+A comprehensive trading journal application designed for professional traders who demand detailed analytics, intelligent insights, and a streamlined workflow for tracking trading performance.
 
-## Features
+## Overview
 
-### Core Functionality
-- **After Trade Journal**: Log completed trades with detailed metrics
-- **Pre Trade Journal**: Plan and track upcoming trades
-- **Backtesting Journal**: Document strategy testing results
-- **AI-Powered Trade Summaries**: Automatic trade analysis and insights
-- **Error Pattern Detection**: Identify recurring trading mistakes and weaknesses
+JournalX provides a complete solution for documenting, analyzing, and improving trading performance. Whether you're tracking live trades, planning entries, or backtesting strategies, the platform offers the tools needed to maintain detailed records and derive actionable insights from your trading data.
 
-### Advanced Features
-- **Dashboard/Command Center**: KPIs, charts, and quick stats
-- **Global Search**: Search across all journal types (After Trade, Pre Trade, Backtest)
-- **Trade Statistics**: Comprehensive analytics with performance by pair, session, and monthly breakdown
-- **Trade Templates**: Save and reuse common trade setups for quick entry
-- **Trade Duplication**: Duplicate trades with one click
-- **Trade Comparison Tool**: Side-by-side comparison of any two trades
-- **Lot Size Calculator**: Calculate position sizes for Deriv broker
-- **Calendar View**: Visual calendar of all trading activity
-- **Daily Summary**: Comprehensive daily trade review
-- **CSV Export**: Export journal data for external analysis
-- **Advanced Filtering**: Filter by pair, date, session, bias, outcome, and more
-- **Strategy Tagging**: Tag trades for better organization
-- **User Settings**: Manage account preferences and profile
-- **Password Reset**: Email-based password recovery
-- **Dynamic Dropdowns**: Admin-managed dropdown options via Django admin
+## Key Features
+
+### Trading Journals
+- **After Trade Journal** - Document completed trades with comprehensive metrics including entry/exit points, profit/loss, session analysis, and market conditions
+- **Pre Trade Journal** - Plan and prepare trades with detailed setup documentation, market analysis, and risk assessment
+- **Backtesting Journal** - Record strategy testing results, performance metrics, and validation outcomes
+
+### Analytics & Insights
+- **Performance Dashboard** - Real-time KPIs including win rate, profit factor, average win/loss, and trading streaks
+- **Trade Statistics** - Comprehensive analytics with performance breakdowns by currency pair, trading session, and time period
+- **Error Pattern Detection** - AI-powered analysis to identify recurring mistakes and trading weaknesses
+- **Trade Comparison** - Side-by-side comparison tool to analyze differences between any two trades
+
+### Productivity Tools
+- **Trade Templates** - Save and reuse common trade setups for rapid entry
+- **Trade Duplication** - Clone previous trades with a single click
+- **Global Search** - Search across all journal types with intelligent filtering
+- **Lot Size Calculator** - Calculate position sizes tailored for Deriv broker specifications
+- **Calendar View** - Visual timeline of all trading activity
+- **CSV Export** - Export data for external analysis and reporting
 
 ### User Experience
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Dark Mode**: Toggle between light and dark themes
-- **Bootstrap 5 UI**: Modern, clean interface
-- **Chart.js Analytics**: Interactive charts and visualizations
-- **File Uploads**: Store trade screenshots and charts locally
-- **Secure**: User authentication with data isolation
+- **Responsive Design** - Fully functional across desktop, tablet, and mobile devices
+- **Dark/Light Mode** - Seamless theme switching for comfortable viewing in any environment
+- **Modern Interface** - Clean, intuitive design built with Bootstrap 5
+- **Interactive Charts** - Dynamic visualizations powered by Chart.js
+- **File Management** - Secure storage for trade screenshots and chart images
 
-## Technology Stack
+## Technology
+
+Built with modern web technologies to ensure reliability, performance, and maintainability.
 
 - **Backend**: Django 5.2
 - **Frontend**: Bootstrap 5.3, Bootstrap Icons
-- **Charts**: Chart.js
-- **Database**: SQLite (default, easily switchable to PostgreSQL)
-- **Language**: Python 3.11+
+- **Visualization**: Chart.js
+- **Database**: PostgreSQL (production), SQLite (development)
+- **Runtime**: Python 3.11+
 
-## Installation
+## Getting Started
 
 ### Prerequisites
+
 - Python 3.11 or higher
-- pip (Python package manager)
+- pip package manager
+- PostgreSQL (for production deployment)
 
-### Setup Steps
+### Installation
 
-1. **Clone the repository**
+1. Clone the repository:
    ```bash
-   git clone <your-repo-url>
+   git clone <repository-url>
    cd journal_project
    ```
 
-2. **Create a virtual environment** (recommended)
+2. Create and activate a virtual environment:
    ```bash
    python -m venv venv
    
-   # On Windows:
+   # Windows
    venv\Scripts\activate
    
-   # On macOS/Linux:
+   # macOS/Linux
    source venv/bin/activate
    ```
 
-3. **Install dependencies**
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Run migrations**
+4. Configure environment variables:
+   Create a `.env` file with your configuration:
+   ```env
+   SECRET_KEY=your-secret-key
+   DEBUG=True
+   DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+   ```
+
+5. Run database migrations:
    ```bash
-   python manage.py makemigrations
    python manage.py migrate
    ```
 
-5. **Create a superuser** (admin account)
+6. Create a superuser account:
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Create media directories** (for file uploads)
-   ```bash
-   # Windows:
-   mkdir media\journal\after_trade
-   mkdir media\journal\pre_trade
-   mkdir media\journal\pre_trade_outcomes
-   mkdir media\journal\backtesting
-   
-   # macOS/Linux:
-   mkdir -p media/journal/{after_trade,pre_trade,pre_trade_outcomes,backtesting}
-   ```
-
-7. **Run the development server**
+7. Start the development server:
    ```bash
    python manage.py runserver
    ```
 
-8. **Access the application**
-   - Open your browser and navigate to: `http://127.0.0.1:8000/`
-   - Register a new account or use the superuser account
+8. Access the application:
+   Open `http://127.0.0.1:8000` in your browser and log in with your superuser credentials.
 
-## Project Structure
+## Usage
 
-```
-journal_project/
-├── journal/                 # Main app
-│   ├── models.py           # Database models
-│   ├── views.py            # View logic
-│   ├── forms.py            # Form definitions
-│   ├── urls.py             # URL routing
-│   ├── services.py         # AI services (summary, error detection)
-│   ├── templates/          # HTML templates
-│   └── migrations/         # Database migrations
-├── journal_project/        # Django project settings
-│   ├── settings.py         # Project configuration
-│   ├── urls.py             # Main URL configuration
-│   └── wsgi.py             # WSGI config
-├── media/                  # User uploaded files (not in git)
-├── static/                 # Static files
-├── db.sqlite3              # SQLite database (not in git)
-├── manage.py               # Django management script
-└── README.md               # This file
-```
+### Creating Trade Entries
 
-## Usage Guide
+**After Trade Entry**
+1. Navigate to "After Trade" → "New Entry"
+2. Complete trade details including pair, date, session, bias, and outcome
+3. Upload relevant screenshots or charts
+4. Add observations and lessons learned
+5. Review AI-generated trade summary
 
-### Creating Your First Entry
+**Pre Trade Entry**
+1. Navigate to "Pre Trade" → "New Entry"
+2. Document your trade plan and setup conditions
+3. Record market analysis and entry criteria
+4. Upload setup images for reference
 
-1. **After Trade Entry**: Navigate to "After Trade" → "New Entry"
-   - Fill in trade details (pair, date, session, bias, outcome, etc.)
-   - Upload chart screenshot
-   - Add observations and notes
-   - AI summary will be generated automatically
+**Backtest Entry**
+1. Navigate to "Backtesting" → "New Entry"
+2. Document strategy parameters and test conditions
+3. Record outcomes and performance metrics
+4. Note any insights or adjustments needed
 
-2. **Pre Trade Entry**: Navigate to "Pre Trade" → "New Entry"
-   - Plan your trade setup
-   - Document conditions and analysis
-   - Upload setup images
+### Dashboard
 
-3. **Backtest Entry**: Navigate to "Backtesting" → "New Entry"
-   - Document strategy testing
-   - Record outcomes and learnings
+The command center provides an overview of your trading performance:
+- Key performance indicators (KPIs) at a glance
+- Visual charts showing performance trends
+- Quick access to recent entries
+- Performance breakdowns by pair and session
 
-### Dashboard Features
+### Data Management
 
-- **Command Center**: Overview of all trading activity
-- **Quick Stats**: Current streak, win rate, POI scores
-- **Charts**: Visual representation of performance metrics
-- **Recent Entries**: Quick access to latest trades
-
-### Exporting Data
-
-- Click "Export" in the top navigation
-- Select the journal type to export
-- CSV file will download with all your data
+- **Export**: Use the export functionality to download CSV files of your journal data
+- **Templates**: Create reusable templates for common trade setups
+- **Search**: Use global search to quickly find specific trades or entries
+- **Filtering**: Apply advanced filters to analyze subsets of your data
 
 ## Configuration
 
-### Media Files (Uploads)
-Media files are stored in `media/journal/` directory. In production:
-- Configure `MEDIA_ROOT` and `MEDIA_URL` in `settings.py`
-- Use a proper web server (nginx, Apache) to serve media files
-- Or use cloud storage (AWS S3, etc.)
-
 ### Database
-Default is SQLite. For production, switch to PostgreSQL:
-1. Install PostgreSQL and `psycopg2`
-2. Update `DATABASES` in `settings.py`
-3. Run migrations again
 
-### Security
-For production deployment:
-- Set `DEBUG = False`
-- Configure `ALLOWED_HOSTS`
-- Use environment variables for sensitive settings
-- Set up proper static file serving
-- Enable HTTPS
+The application supports both SQLite (development) and PostgreSQL (production). Configure your database connection via environment variables or Django settings.
+
+### Static Files
+
+Static files are served using WhiteNoise in production. No additional web server configuration is required for static file serving.
+
+### Media Files
+
+User-uploaded files are stored in the `media/` directory. For production deployments, configure appropriate storage backends or use cloud storage services.
+
+### Email Configuration
+
+Configure email settings for password reset and notifications:
+- `EMAIL_BACKEND`: SMTP backend for production
+- `EMAIL_HOST`: SMTP server address
+- `EMAIL_PORT`: SMTP port (typically 587 for TLS)
+- `EMAIL_HOST_USER`: SMTP username
+- `EMAIL_HOST_PASSWORD`: SMTP password
 
 ## Development
 
@@ -200,14 +180,31 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
+## Deployment
+
+The application is configured for deployment on modern PaaS platforms. Key requirements:
+
+- Set `DEBUG=False` in production
+- Configure `ALLOWED_HOSTS` appropriately
+- Use environment variables for sensitive settings
+- Ensure static files are collected (`python manage.py collectstatic`)
+- Configure proper database connection
+- Enable HTTPS in production
+
+## Security
+
+Production deployments should:
+- Use strong, unique `SECRET_KEY` values
+- Enable HTTPS/SSL
+- Configure proper CORS settings if needed
+- Use secure session and CSRF cookie settings
+- Implement proper authentication and authorization
+- Regularly update dependencies
+
 ## License
 
-This project is for personal use. Modify and use as needed.
+This project is for personal use. Modify and distribute as needed.
 
-## Support
+---
 
-For issues or questions, please check the code comments or create an issue in the repository.
-
-## Author
-
-JournalX - Built for professional traders
+**Author**: Raymond
