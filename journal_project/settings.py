@@ -178,7 +178,10 @@ STATICFILES_DIRS = [
 
 # WhiteNoise configuration for serving static files in production
 # WhiteNoise allows the app to serve its own static files, making it a self-contained unit
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using CompressedStaticFilesStorage (non-manifest) for reliability in production
+# This avoids 500 errors if manifest.json is missing or corrupted during deployment
+# CompressedStaticFilesStorage is more forgiving and still provides compression
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # WhiteNoise settings
 WHITENOISE_USE_FINDERS = True  # Use Django's static file finders
