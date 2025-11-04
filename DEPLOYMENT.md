@@ -161,8 +161,11 @@ Value: Your secure admin password
 - Use the Internal Database URL from PostgreSQL service
 
 ### Static Files Not Loading
-- Ensure `collectstatic` runs in build command
+- WhiteNoise is configured and should automatically serve static files
+- Ensure `collectstatic` runs in build command (already included)
 - Check build logs for static file collection messages
+- Verify `STATICFILES_STORAGE` is set to `whitenoise.storage.CompressedManifestStaticFilesStorage`
+- If admin CSS still doesn't load, check that WhiteNoise middleware is in MIDDLEWARE (after SecurityMiddleware)
 
 ### Service Sleeps (Free Tier)
 - This is normal on free tier
