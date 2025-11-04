@@ -46,7 +46,7 @@ Complete guide to deploy JournalX on Render.
    - **Root Directory:** (leave empty)
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput`
-   - **Start Command:** `gunicorn journal_project.wsgi`
+   - **Start Command:** `gunicorn journal_project.wsgi --bind 0.0.0.0:$PORT`
    - **Environment:** Python 3
    - **Python Version:** 3.11
 
