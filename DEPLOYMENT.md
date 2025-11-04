@@ -111,15 +111,14 @@ Value: Your secure admin password
 3. Watch the build logs in real-time
 4. Wait for "Your service is live" message (5-10 minutes)
 
-### Step 6: Create Admin User
+### Step 6: Access Your Application
 
-1. In Render dashboard, go to your Web Service
-2. Click "Shell" tab (or use Render's shell)
-3. Run:
-```bash
-python manage.py createsuperuser
-```
-4. Follow the prompts to create your admin account
+**Note:** Your admin user is automatically created during deployment via the build command. If you set the `DJANGO_SUPERUSER_*` environment variables, those will be used. Otherwise, the default credentials are:
+- Username: `admin`
+- Password: `admin123`
+- Email: `admin@example.com`
+
+**Important:** Change the default password immediately after first login!
 
 1. Render provides a URL: `https://journalx.onrender.com` (or your service name)
 2. Your app is now live!
