@@ -1,44 +1,58 @@
 # Deployment Guide
 
-Complete guide to deploy JournalX on Railway.
+Complete guide to deploy JournalX on Render.
 
 ## Prerequisites
 
 - GitHub account (code already on GitHub)
-- Email address  
-- 10-15 minutes
+- Email address
+- Credit card (for verification, won't be charged on free tier)
+- 15-20 minutes
 
 ## Step-by-Step Instructions
 
 ### Step 1: Sign Up
 
-1. Go to https://railway.app
-2. Click "Start a New Project"
+1. Go to https://render.com
+2. Click "Get Started for Free"
 3. Sign up with GitHub (recommended)
-4. Authorize Railway to access your repositories
+4. Authorize Render to access your repositories
 
-### Step 2: Create Project
+### Step 2: Create PostgreSQL Database
 
-1. Click "New Project"
-2. Select "Deploy from GitHub repo"
-3. Find and select: `Kiriagoray/Trading-Journal`
-4. Railway will automatically detect it's a Django project
+1. In Render dashboard, click "New +"
+2. Select "PostgreSQL"
+3. Configure:
+   - **Name:** `journalx-db` (or any name)
+   - **Database:** `journalx`
+   - **User:** (auto-generated)
+   - **Region:** Choose closest to you
+   - **PostgreSQL Version:** Latest (14 or 15)
+   - **Plan:** Free (for testing)
+4. Click "Create Database"
+5. Wait for database to be created (1-2 minutes)
+6. **Important:** Copy the **Internal Database URL** - you'll need it
 
-### Step 3: Add PostgreSQL Database
+### Step 3: Create Web Service
 
-1. In project dashboard, click "+ New"
-2. Select "Database" → "Add PostgreSQL"
-3. Wait for database to be created (30 seconds)
-4. Railway automatically links the database to your web service
-
-**Note:** Railway automatically sets `DATABASE_URL` - no manual configuration needed.
+1. Click "New +" → "Web Service"
+2. Select "Build and deploy from a Git repository"
+3. Connect your GitHub account if not already connected
+4. Select repository: `Kiriagoray/Trading-Journal`
+5. Configure:
+   - **Name:** `journalx` (or any name)
+   - **Region:** Same as database
+   - **Branch:** `main`
+   - **Root Directory:** (leave empty)
+   - **Runtime:** Python 3
+   - **Build Command:** `pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput`
+   - **Start Command:** `gunicorn journal_project.wsgi`
+   - **Environment:** Python 3
+   - **Python Version:** 3.11
 
 ### Step 4: Configure Environment Variables
 
-1. Click on your **Web Service** (the Django service)
-2. Go to the **"Variables"** tab
-3. Verify `DATABASE_URL` is already there (added automatically)
-4. Click "+ New Variable" and add these variables:
+In the Web Service settings, go to **"Environment"** tab and add:
 
 **SECRET_KEY**
 Generate it using:
@@ -51,7 +65,10 @@ Copy the output and paste as the value.
 Value: `False`
 
 **ALLOWED_HOSTS**
-Value: `*.railway.app`
+Value: `journalx.onrender.com,yourdomain.com`
+
+**DATABASE_URL**
+Value: Paste the **Internal Database URL** from your PostgreSQL service
 
 **EMAIL_BACKEND**
 Value: `django.core.mail.backends.smtp.EmailBackend`
@@ -74,72 +91,82 @@ Value: `bvbkonsxbzzcvcwf`
 **DEFAULT_FROM_EMAIL**
 Value: `teamjournalx@gmail.com`
 
-### Step 5: Configure Start Command
+### Step 5: Deploy
 
-1. In your Web Service, go to **"Settings"** tab
-2. Find **"Start Command"**
-3. Set it to:
-```
-python manage.py migrate && gunicorn journal_project.wsgi --bind 0.0.0.0:$PORT
-```
+1. Click "Create Web Service"
+2. Render will start building automatically
+3. Watch the build logs in real-time
+4. Wait for "Your service is live" message (5-10 minutes)
 
-### Step 6: Deploy
+### Step 6: Create Admin User
 
-1. Railway will automatically start building and deploying
-2. Watch the **"Deployments"** tab for progress
-3. Wait for **"Active"** status (green checkmark)
-4. Your app URL will be available in **"Settings"** → **"Domains"**
-
-### Step 7: Create Admin User
-
-1. In Railway dashboard, go to your Web Service
-2. Click **"Deployments"** tab
-3. Click on the latest deployment
-4. Use the **"Logs"** tab or Railway's shell to run:
+1. In Render dashboard, go to your Web Service
+2. Click "Shell" tab (or use Render's shell)
+3. Run:
 ```bash
 python manage.py createsuperuser
 ```
+4. Follow the prompts to create your admin account
 
-Follow the prompts to create your admin account.
+### Step 7: Access Your Application
 
-### Step 8: Access Your Application
+1. Render provides a URL: `https://journalx.onrender.com` (or your service name)
+2. Your app is now live!
 
-1. Railway provides a URL like: `https://your-app-name.railway.app`
-2. Click the URL or find it in **"Settings"** → **"Domains"**
-3. Your app is now live!
+### Step 8: Custom Domain (Optional)
 
-### Step 9: Custom Domain (Optional)
+1. Go to "Settings" → "Custom Domains"
+2. Add your domain name
+3. Follow DNS configuration instructions
 
-1. Go to **"Settings"** → **"Domains"**
-2. Click **"Custom Domain"**
-3. Add your domain name
-4. Follow Railway's DNS configuration instructions
+## Important Notes
+
+### Free Tier Limitations
+
+- **Sleeps after 15 minutes** of inactivity (free tier only)
+- First request after sleep takes 30-60 seconds to wake up
+- Upgrade to paid plan ($7/month) to avoid sleeping
+
+### Database Backups
+
+- Free tier: Manual backups only
+- Paid plans: Automatic daily backups
+
+### Static Files
+
+- Automatically collected during build (included in build command)
+- Served automatically by Render
 
 ## Troubleshooting
 
 ### Build Fails
-- Check build logs in "Deployments" tab
-- Verify `requirements.txt` is correct
-- Ensure Python version is compatible
+- Check build logs in Render dashboard
+- Verify Python version is 3.11
+- Ensure all dependencies in requirements.txt are correct
 
 ### Database Connection Errors
 - Verify PostgreSQL service is running
-- Check that `DATABASE_URL` exists in Variables tab
-- Railway auto-links databases - should work automatically
+- Check that `DATABASE_URL` is set correctly
+- Use the Internal Database URL from PostgreSQL service
 
 ### Static Files Not Loading
-- Static files are collected during build automatically
-- If issues persist, check build logs
+- Ensure `collectstatic` runs in build command
+- Check build logs for static file collection messages
+
+### Service Sleeps (Free Tier)
+- This is normal on free tier
+- First request after sleep will be slow (30-60 seconds)
+- Consider upgrading to Starter plan ($7/month) to prevent sleeping
 
 ### 500 Errors
 - Check deployment logs for specific error messages
 - Verify `DEBUG=False` and `ALLOWED_HOSTS` is set
-- Ensure migrations ran successfully (check logs)
+- Ensure migrations ran successfully (check build logs)
 
 ### Email Not Sending
 - Verify all EMAIL_* environment variables are set
 - Check Gmail app password is correct
-- Review Railway logs for email errors
+- Review Render logs for email errors
 
 ## Post-Deployment Checklist
 
@@ -152,15 +179,15 @@ Follow the prompts to create your admin account.
 
 ## Cost
 
-- Free tier: $5 credit/month (usually enough for testing)
-- After free tier: ~$5-10/month for small traffic
-- Database: Included in free tier
+- **Free tier:** $0 (with limitations - sleeps after inactivity)
+- **Starter plan:** $7/month (no sleep, better performance)
+- **Database:** Free tier available
 
 ## Support
 
-- Railway Documentation: https://docs.railway.app
+- Render Documentation: https://render.com/docs
 - Check build/deployment logs for detailed error messages
-- Railway automatically handles most configuration
+- Render provides helpful error messages in the dashboard
 
 ---
 
