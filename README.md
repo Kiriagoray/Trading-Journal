@@ -105,7 +105,7 @@ Built with modern web technologies to ensure reliability, performance, and maint
    python manage.py runserver
    ```
 
-8. Access the application:
+9. Access the application:
    Open `http://127.0.0.1:8000` in your browser and log in with your superuser credentials.
 
 ## Usage
