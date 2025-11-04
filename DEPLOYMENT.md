@@ -68,7 +68,7 @@ Value: `False`
 Value: `journalx.onrender.com,yourdomain.com`
 
 **DATABASE_URL**
-Value: Paste the **Internal Database URL** from your PostgreSQL service
+Value: Paste the **Internal Database URL** from your PostgreSQL service (found in PostgreSQL service → "Connect" → "Internal Database URL")
 
 **EMAIL_BACKEND**
 Value: `django.core.mail.backends.smtp.EmailBackend`
