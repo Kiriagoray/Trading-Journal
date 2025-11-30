@@ -57,27 +57,41 @@ class AfterTradeEntryForm(forms.ModelForm):
         
         # Add dynamic custom fields if user is provided
         if user:
-            custom_fields = get_user_journal_fields(user, 'after_trade')
-            for field in custom_fields:
-                form_field = create_dynamic_form_field(field)
-                # Set initial value if editing existing entry
-                if self.instance and self.instance.pk:
-                    value_obj = get_field_value_for_entry(self.instance, field)
-                    if value_obj:
-                        if field.field_type == 'checkbox':
-                            form_field.initial = value_obj.value_boolean
-                        elif field.field_type in ['number', 'decimal']:
-                            form_field.initial = value_obj.value_number
-                        elif field.field_type == 'date':
-                            form_field.initial = value_obj.value_date
-                        elif field.field_type == 'datetime':
-                            form_field.initial = value_obj.value_datetime
-                        elif field.field_type == 'multiselect':
-                            # Multi-select stored as comma-separated
-                            form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
-                        else:
-                            form_field.initial = value_obj.value_text
-                self.fields[f'custom_{field.name}'] = form_field
+            try:
+                custom_fields = get_user_journal_fields(user, 'after_trade')
+                for field in custom_fields:
+                    try:
+                        form_field = create_dynamic_form_field(field)
+                        if form_field is None:
+                            continue
+                        # Set initial value if editing existing entry
+                        if self.instance and self.instance.pk:
+                            try:
+                                value_obj = get_field_value_for_entry(self.instance, field)
+                                if value_obj:
+                                    if field.field_type == 'checkbox':
+                                        form_field.initial = value_obj.value_boolean
+                                    elif field.field_type in ['number', 'decimal']:
+                                        form_field.initial = value_obj.value_number
+                                    elif field.field_type == 'date':
+                                        form_field.initial = value_obj.value_date
+                                    elif field.field_type == 'datetime':
+                                        form_field.initial = value_obj.value_datetime
+                                    elif field.field_type == 'multiselect':
+                                        # Multi-select stored as comma-separated
+                                        form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
+                                    else:
+                                        form_field.initial = value_obj.value_text
+                            except Exception as e:
+                                # Skip if we can't get the value
+                                pass
+                        self.fields[f'custom_{field.name}'] = form_field
+                    except Exception as e:
+                        # Skip fields that can't be created
+                        continue
+            except Exception as e:
+                # If we can't get custom fields, continue without them
+                pass
 
 
 class PreTradeEntryForm(forms.ModelForm):
@@ -114,26 +128,41 @@ class PreTradeEntryForm(forms.ModelForm):
         
         # Add dynamic custom fields if user is provided
         if user:
-            custom_fields = get_user_journal_fields(user, 'pre_trade')
-            for field in custom_fields:
-                form_field = create_dynamic_form_field(field)
-                # Set initial value if editing existing entry
-                if self.instance and self.instance.pk:
-                    value_obj = get_field_value_for_entry(self.instance, field)
-                    if value_obj:
-                        if field.field_type == 'checkbox':
-                            form_field.initial = value_obj.value_boolean
-                        elif field.field_type in ['number', 'decimal']:
-                            form_field.initial = value_obj.value_number
-                        elif field.field_type == 'date':
-                            form_field.initial = value_obj.value_date
-                        elif field.field_type == 'datetime':
-                            form_field.initial = value_obj.value_datetime
-                        elif field.field_type == 'multiselect':
-                            form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
-                        else:
-                            form_field.initial = value_obj.value_text
-                self.fields[f'custom_{field.name}'] = form_field
+            try:
+                custom_fields = get_user_journal_fields(user, 'pre_trade')
+                for field in custom_fields:
+                    try:
+                        form_field = create_dynamic_form_field(field)
+                        if form_field is None:
+                            continue
+                        # Set initial value if editing existing entry
+                        if self.instance and self.instance.pk:
+                            try:
+                                value_obj = get_field_value_for_entry(self.instance, field)
+                                if value_obj:
+                                    if field.field_type == 'checkbox':
+                                        form_field.initial = value_obj.value_boolean
+                                    elif field.field_type in ['number', 'decimal']:
+                                        form_field.initial = value_obj.value_number
+                                    elif field.field_type == 'date':
+                                        form_field.initial = value_obj.value_date
+                                    elif field.field_type == 'datetime':
+                                        form_field.initial = value_obj.value_datetime
+                                    elif field.field_type == 'multiselect':
+                                        # Multi-select stored as comma-separated
+                                        form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
+                                    else:
+                                        form_field.initial = value_obj.value_text
+                            except Exception as e:
+                                # Skip if we can't get the value
+                                pass
+                        self.fields[f'custom_{field.name}'] = form_field
+                    except Exception as e:
+                        # Skip fields that can't be created
+                        continue
+            except Exception as e:
+                # If we can't get custom fields, continue without them
+                pass
 
 
 class BacktestEntryForm(forms.ModelForm):
@@ -170,26 +199,41 @@ class BacktestEntryForm(forms.ModelForm):
         
         # Add dynamic custom fields if user is provided
         if user:
-            custom_fields = get_user_journal_fields(user, 'backtest')
-            for field in custom_fields:
-                form_field = create_dynamic_form_field(field)
-                # Set initial value if editing existing entry
-                if self.instance and self.instance.pk:
-                    value_obj = get_field_value_for_entry(self.instance, field)
-                    if value_obj:
-                        if field.field_type == 'checkbox':
-                            form_field.initial = value_obj.value_boolean
-                        elif field.field_type in ['number', 'decimal']:
-                            form_field.initial = value_obj.value_number
-                        elif field.field_type == 'date':
-                            form_field.initial = value_obj.value_date
-                        elif field.field_type == 'datetime':
-                            form_field.initial = value_obj.value_datetime
-                        elif field.field_type == 'multiselect':
-                            form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
-                        else:
-                            form_field.initial = value_obj.value_text
-                self.fields[f'custom_{field.name}'] = form_field
+            try:
+                custom_fields = get_user_journal_fields(user, 'backtest')
+                for field in custom_fields:
+                    try:
+                        form_field = create_dynamic_form_field(field)
+                        if form_field is None:
+                            continue
+                        # Set initial value if editing existing entry
+                        if self.instance and self.instance.pk:
+                            try:
+                                value_obj = get_field_value_for_entry(self.instance, field)
+                                if value_obj:
+                                    if field.field_type == 'checkbox':
+                                        form_field.initial = value_obj.value_boolean
+                                    elif field.field_type in ['number', 'decimal']:
+                                        form_field.initial = value_obj.value_number
+                                    elif field.field_type == 'date':
+                                        form_field.initial = value_obj.value_date
+                                    elif field.field_type == 'datetime':
+                                        form_field.initial = value_obj.value_datetime
+                                    elif field.field_type == 'multiselect':
+                                        # Multi-select stored as comma-separated
+                                        form_field.initial = value_obj.value_text.split(',') if value_obj.value_text else []
+                                    else:
+                                        form_field.initial = value_obj.value_text
+                            except Exception as e:
+                                # Skip if we can't get the value
+                                pass
+                        self.fields[f'custom_{field.name}'] = form_field
+                    except Exception as e:
+                        # Skip fields that can't be created
+                        continue
+            except Exception as e:
+                # If we can't get custom fields, continue without them
+                pass
 
 
 class LotSizeCalculatorForm(forms.Form):

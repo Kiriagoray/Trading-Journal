@@ -543,13 +543,20 @@ def create_dynamic_form_field(field):
     """Create a Django form field from a JournalField"""
     from django import forms
     
+    # Defensive checks
+    if not field:
+        return None
+    
+    if not hasattr(field, 'field_type'):
+        return None
+    
     field_kwargs = {
-        'label': field.display_name,
-        'required': field.is_required,
-        'help_text': field.help_text,
+        'label': getattr(field, 'display_name', 'Field'),
+        'required': getattr(field, 'is_required', False),
+        'help_text': getattr(field, 'help_text', ''),
     }
     
-    if field.default_value:
+    if hasattr(field, 'default_value') and field.default_value:
         field_kwargs['initial'] = field.default_value
     
     if field.field_type == 'text':
@@ -576,14 +583,28 @@ def create_dynamic_form_field(field):
             **field_kwargs
         )
     elif field.field_type == 'select':
-        choices = [(opt.value, opt.display_label) for opt in field.options.all().order_by('order')]
+        try:
+            # Use the 'options' related_name from JournalFieldOption model
+            choices = [(opt.value, opt.display_label) for opt in field.options.all().order_by('order')]
+        except (AttributeError, Exception) as e:
+            # Fallback if relationship doesn't exist or error occurs
+            choices = []
+        if not choices:
+            choices = [('', 'No options available')]
         return forms.ChoiceField(
             choices=choices,
             widget=forms.Select(attrs={'class': 'form-select'}),
             **field_kwargs
         )
     elif field.field_type == 'multiselect':
-        choices = [(opt.value, opt.display_label) for opt in field.options.all().order_by('order')]
+        try:
+            # Use the 'options' related_name from JournalFieldOption model
+            choices = [(opt.value, opt.display_label) for opt in field.options.all().order_by('order')]
+        except (AttributeError, Exception) as e:
+            # Fallback if relationship doesn't exist or error occurs
+            choices = []
+        if not choices:
+            choices = [('', 'No options available')]
         return forms.MultipleChoiceField(
             choices=choices,
             widget=forms.SelectMultiple(attrs={'class': 'form-select'}),

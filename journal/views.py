@@ -324,12 +324,20 @@ def after_trade_create(request):
             form.save_m2m()  # Save many-to-many relationships
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'after_trade')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'after_trade')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             # Auto-generate AI summary
             try:
@@ -380,12 +388,20 @@ def after_trade_edit(request, pk):
             form.save_m2m()
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'after_trade')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'after_trade')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             messages.success(request, 'Entry updated successfully!')
             return redirect('after_trade_detail', pk=entry.pk)
@@ -626,12 +642,20 @@ def pre_trade_create(request):
             entry.save()
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'pre_trade')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'pre_trade')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             messages.success(request, 'Pre Trade entry created successfully!')
             return redirect('pre_trade_detail', pk=entry.pk)
@@ -669,12 +693,20 @@ def pre_trade_edit(request, pk):
             entry = form.save()
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'pre_trade')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'pre_trade')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             messages.success(request, 'Entry updated successfully!')
             return redirect('pre_trade_detail', pk=entry.pk)
@@ -902,12 +934,20 @@ def backtest_create(request):
             entry.save()
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'backtest')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'backtest')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             messages.success(request, 'Backtest entry created successfully!')
             return redirect('backtest_detail', pk=entry.pk)
@@ -945,12 +985,20 @@ def backtest_edit(request, pk):
             entry = form.save()
             
             # Save custom field values
-            custom_fields = get_user_journal_fields(request.user, 'backtest')
-            for field in custom_fields:
-                field_key = f'custom_{field.name}'
-                if field_key in form.cleaned_data:
-                    value = form.cleaned_data[field_key]
-                    save_field_value_for_entry(entry, field, value)
+            try:
+                custom_fields = get_user_journal_fields(request.user, 'backtest')
+                for field in custom_fields:
+                    field_key = f'custom_{field.name}'
+                    if field_key in form.cleaned_data:
+                        value = form.cleaned_data[field_key]
+                        try:
+                            save_field_value_for_entry(entry, field, value)
+                        except Exception as e:
+                            # Continue even if one field fails to save
+                            pass
+            except Exception as e:
+                # Continue even if custom fields can't be saved
+                pass
             
             messages.success(request, 'Entry updated successfully!')
             return redirect('backtest_detail', pk=entry.pk)
@@ -1067,15 +1115,19 @@ def lot_size_calculator(request):
                 'form': form, 
                 'result': result,
                 'instrument_data': instrument_data,
-                'instruments_json': json.dumps(INSTRUMENTS)
+                'instruments_json': json.dumps(INSTRUMENTS),
+                'recent_calculations': []
             })
     else:
         form = LotSizeCalculatorForm()
     
     # Get recent calculations for this user
-    recent_calculations = LotSizeCalculation.objects.filter(
-        user=request.user
-    ).order_by('-created_at')[:10]
+    try:
+        recent_calculations = LotSizeCalculation.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:10]
+    except Exception as e:
+        recent_calculations = []
     
     return render(request, 'journal/lot_size_calculator.html', {
         'form': form,
