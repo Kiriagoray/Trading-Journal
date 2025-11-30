@@ -391,7 +391,11 @@ def after_trade_edit(request, pk):
             return redirect('after_trade_detail', pk=entry.pk)
     else:
         form = AfterTradeEntryForm(instance=entry, user=request.user)
-    return render(request, 'journal/after_trade_form.html', {'form': form, 'entry': entry})
+    return render(request, 'journal/after_trade_form.html', {
+        'form': form,
+        'entry': entry,
+        'action': 'Edit'
+    })
 
 
 @login_required
