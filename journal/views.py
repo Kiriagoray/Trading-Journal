@@ -10,6 +10,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import csv
+import re
 from .models import (
     AfterTradeEntry, PreTradeEntry, BacktestEntry, StrategyTag, FilterPreset, 
     LotSizeCalculation, JournalField, JournalFieldOption, JournalFieldValue
@@ -1557,7 +1558,15 @@ def manage_properties(request, journal_type):
         
         if action == 'create':
             # Create new field
-            name = request.POST.get('name', '').strip().lower().replace(' ', '_')
+            # Convert field name to valid Python identifier: lowercase, replace spaces/special chars with underscores
+            name = request.POST.get('name', '').strip()
+            # Convert to lowercase and replace spaces and special characters with underscores
+            name = re.sub(r'[^a-z0-9_]', '_', name.lower())
+            # Remove multiple consecutive underscores
+            name = re.sub(r'_+', '_', name)
+            # Remove leading/trailing underscores
+            name = name.strip('_')
+            
             display_name = request.POST.get('display_name', '').strip()
             field_type = request.POST.get('field_type', 'text')
             is_required = request.POST.get('is_required') == 'on'
