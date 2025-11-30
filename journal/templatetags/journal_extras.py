@@ -35,7 +35,7 @@ def get_entry_field_value(entry, field):
         return value_obj.get_value_display()
     return ''
 
-@register.filter
+@register.filter(name='get_item')
 def get_item(dictionary, key):
     """Get an item from a dictionary by key"""
     if dictionary and isinstance(dictionary, dict):
@@ -59,11 +59,4 @@ def get_custom_filter_max(filters, field_name):
     """Get custom field filter max value from filters dict"""
     key = f'custom_{field_name}_max'
     return filters.get(key, '') if filters else ''
-
-@register.filter
-def get_item(dictionary, key):
-    """Get an item from a dictionary by key"""
-    if dictionary and isinstance(dictionary, dict):
-        return dictionary.get(key, {})
-    return {}
 

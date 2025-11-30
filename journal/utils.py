@@ -399,16 +399,11 @@ def filter_entries_by_custom_field(queryset, field, filter_value, journal_type):
         bool_value = str(filter_value).lower() in ['true', '1', 'yes']
         field_values = field_values.filter(value_boolean=bool_value)
     elif field.field_type in ['number', 'decimal']:
-        # Numeric range (filter_value should be min or max)
+        # Numeric range - filter_value can be a single value or we use min/max
         try:
             num_value = float(filter_value)
-            if 'min' in str(filter_value):
-                field_values = field_values.filter(value_number__gte=num_value)
-            elif 'max' in str(filter_value):
-                field_values = field_values.filter(value_number__lte=num_value)
-            else:
-                field_values = field_values.filter(value_number=num_value)
-        except ValueError:
+            field_values = field_values.filter(value_number=num_value)
+        except (ValueError, TypeError):
             pass
     elif field.field_type == 'date':
         # Date range

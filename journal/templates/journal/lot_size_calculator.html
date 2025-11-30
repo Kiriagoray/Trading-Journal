@@ -241,7 +241,7 @@
                         <option value="">Search or select instrument...</option>
                         {% for code, name in form.fields.instrument.choices %}
                             {% if code %}
-                                <option value="{{ code }}" data-pip-value="{{ instruments_json|get_item:code|get_item:'pip_value' }}">{{ name }}</option>
+                                <option value="{{ code }}">{{ name }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>

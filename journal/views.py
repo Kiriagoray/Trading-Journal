@@ -177,15 +177,18 @@ def after_trade_list(request):
                         if min_val:
                             try:
                                 field_values = field_values.filter(value_number__gte=float(min_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if max_val:
                             try:
                                 field_values = field_values.filter(value_number__lte=float(max_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'date':
                 date_min = request.GET.get(f'{field_name}_min', '').strip()
                 date_max = request.GET.get(f'{field_name}_max', '').strip()
@@ -200,16 +203,19 @@ def after_trade_list(request):
                             try:
                                 date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__gte=date_min_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if date_max:
                             try:
                                 date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__lte=date_max_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'checkbox':
                 if filter_value.lower() in ['true', '1', 'yes']:
                     entry_ids = list(entries.values_list('id', flat=True))
@@ -497,15 +503,18 @@ def pre_trade_list(request):
                         if min_val:
                             try:
                                 field_values = field_values.filter(value_number__gte=float(min_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if max_val:
                             try:
                                 field_values = field_values.filter(value_number__lte=float(max_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'date':
                 date_min = request.GET.get(f'{field_name}_min', '').strip()
                 date_max = request.GET.get(f'{field_name}_max', '').strip()
@@ -520,16 +529,19 @@ def pre_trade_list(request):
                             try:
                                 date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__gte=date_min_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if date_max:
                             try:
                                 date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__lte=date_max_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'checkbox':
                 if filter_value.lower() in ['true', '1', 'yes']:
                     entry_ids = list(entries.values_list('id', flat=True))
@@ -760,15 +772,18 @@ def backtest_list(request):
                         if min_val:
                             try:
                                 field_values = field_values.filter(value_number__gte=float(min_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if max_val:
                             try:
                                 field_values = field_values.filter(value_number__lte=float(max_val))
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'date':
                 date_min = request.GET.get(f'{field_name}_min', '').strip()
                 date_max = request.GET.get(f'{field_name}_max', '').strip()
@@ -783,16 +798,19 @@ def backtest_list(request):
                             try:
                                 date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__gte=date_min_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         if date_max:
                             try:
                                 date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
                                 field_values = field_values.filter(value_date__lte=date_max_obj)
-                            except ValueError:
+                            except (ValueError, TypeError):
                                 pass
                         matching_ids = list(field_values.values_list('entry_id', flat=True))
-                        entries = entries.filter(id__in=matching_ids)
+                        if matching_ids:
+                            entries = entries.filter(id__in=matching_ids)
+                        else:
+                            entries = entries.none()
             elif field.field_type == 'checkbox':
                 if filter_value.lower() in ['true', '1', 'yes']:
                     entry_ids = list(entries.values_list('id', flat=True))
