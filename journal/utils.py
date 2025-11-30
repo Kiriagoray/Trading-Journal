@@ -521,22 +521,29 @@ def get_all_field_values_for_entry(entry):
 def save_field_value_for_entry(entry, field, value):
     """Save a field value for an entry"""
     from .models import JournalFieldValue
-    entry_type_map = {
-        'AfterTradeEntry': 'after_trade',
-        'PreTradeEntry': 'pre_trade',
-        'BacktestEntry': 'backtest',
-    }
-    entry_type = entry_type_map.get(entry.__class__.__name__, '')
-    
-    value_obj, created = JournalFieldValue.objects.get_or_create(
-        entry_type=entry_type,
-        entry_id=entry.pk,
-        field=field,
-        defaults={}
-    )
-    value_obj.set_value(value)
-    value_obj.save()
-    return value_obj
+    try:
+        entry_type_map = {
+            'AfterTradeEntry': 'after_trade',
+            'PreTradeEntry': 'pre_trade',
+            'BacktestEntry': 'backtest',
+        }
+        entry_type = entry_type_map.get(entry.__class__.__name__, '')
+        
+        if not entry_type or not field:
+            return None
+        
+        value_obj, created = JournalFieldValue.objects.get_or_create(
+            entry_type=entry_type,
+            entry_id=entry.pk,
+            field=field,
+            defaults={}
+        )
+        value_obj.set_value(value)
+        value_obj.save()
+        return value_obj
+    except Exception as e:
+        # Log error but don't break the form submission
+        return None
 
 
 def create_dynamic_form_field(field):
