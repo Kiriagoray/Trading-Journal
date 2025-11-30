@@ -53,68 +53,59 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- System Fields -->
         <div class="row mb-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
+                <strong>Pair:</strong> <span class="badge bg-primary">{{ entry.pair }}</span>
+            </div>
+            <div class="col-md-4">
+                <strong>Date:</strong> {{ entry.date|date:"M d, Y" }}
+            </div>
+            <div class="col-md-4">
                 <strong>Outcome:</strong> <span class="badge bg-{% if entry.outcome == 'win' %}success{% else %}danger{% endif %}">{{ entry.outcome|upper }}</span>
-            </div>
-            <div class="col-md-3">
-                <strong>Session:</strong> {{ entry.session }}
-            </div>
-            <div class="col-md-3">
-                <strong>Bias:</strong> <span class="badge bg-{% if entry.bias == 'bullish' %}success{% else %}danger{% endif %}">{{ entry.bias|title }}</span>
-            </div>
-            <div class="col-md-3">
-                <strong>Risk:</strong> {{ entry.risk_percentage }}%
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <strong>RR Ratio:</strong> 
-                {% if entry.rr_ratio %}
-                    <span class="badge bg-info">{{ entry.rr_ratio }}:1</span>
-                {% else %}
-                    <span class="text-muted">N/A</span>
-                {% endif %}
-            </div>
-            <div class="col-md-3">
-                <strong>Risk Pips:</strong> {% if entry.risk_pips %}{{ entry.risk_pips }}{% else %}N/A{% endif %}
-            </div>
-            <div class="col-md-3">
-                <strong>Reward Pips:</strong> {% if entry.reward_pips %}{{ entry.reward_pips }}{% else %}N/A{% endif %}
-            </div>
-            <div class="col-md-3">
-                <strong>Market Condition:</strong> {{ entry.market_condition }}
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <strong>POI Quality Score:</strong> <span class="badge bg-warning text-dark">{{ entry.poi_quality_score }}/5</span>
-            </div>
-            <div class="col-md-3">
-                <strong>Entry Quality:</strong> {{ entry.entry_quality|title }}
-            </div>
-            <div class="col-md-3">
-                <strong>Discipline Score:</strong> {{ entry.discipline_score|title }}
-            </div>
-            <div class="col-md-3">
-                <strong>Predicted Bias:</strong> 
-                <span class="badge bg-{% if entry.predicted_directional_bias == 'correct' %}success{% elif entry.predicted_directional_bias == 'incorrect' %}danger{% else %}warning{% endif %}">
-                    {{ entry.predicted_directional_bias|title }}
-                </span>
             </div>
         </div>
         {% if entry.chart_image %}
             <div class="mb-3">
-                <strong>Chart:</strong><br>
-                <img src="{{ entry.chart_image.url }}" class="img-fluid rounded mt-2" alt="Chart">
+                <strong>Chart Image:</strong><br>
+                <img src="{{ entry.chart_image.url }}" class="img-fluid rounded mt-2" alt="Chart" style="max-height: 500px;">
             </div>
         {% endif %}
         <div class="mb-3">
-            <strong>Observations:</strong>
+            <strong>Notes/Observations:</strong>
             <p class="mt-2" style="white-space: pre-wrap;">{{ entry.observations }}</p>
         </div>
     </div>
 </div>
+
+<!-- Custom Fields Section -->
+{% if custom_field_values %}
+<div class="card mb-3">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Custom Fields</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for field, value_obj in custom_field_values.items %}
+                {% if value_obj %}
+                <div class="col-md-4 mb-3">
+                    <strong>{{ field.display_name }}:</strong><br>
+                    {% if field.field_type == 'checkbox' %}
+                        <span class="badge bg-{% if value_obj.value_boolean %}success{% else %}secondary{% endif %}">
+                            {% if value_obj.value_boolean %}Yes{% else %}No{% endif %}
+                        </span>
+                    {% elif field.field_type in 'select,multiselect' %}
+                        <span class="badge bg-primary">{{ value_obj.get_value_display }}</span>
+                    {% else %}
+                        <span>{{ value_obj.get_value_display }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
 {% if related %}
     <div class="card">
         <div class="card-header">

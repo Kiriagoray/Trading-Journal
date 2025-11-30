@@ -80,6 +80,10 @@ urlpatterns = [
     path('templates/<int:template_id>/use/', views.use_template, name='use_template'),
     path('settings/', views.settings_page, name='settings'),
     
+    # Property Management (Dynamic Fields)
+    path('properties/<str:journal_type>/', views.manage_properties, name='manage_properties'),
+    path('properties/field/<int:field_id>/options/', views.manage_field_options, name='manage_field_options'),
+    
     # API Endpoints
     path('api/dropdown-choices/', api_views.api_dropdown_choices, name='api_dropdown_choices'),
     path('api/dropdown-choices/<str:category_name>/', api_views.api_dropdown_category, name='api_dropdown_category'),

@@ -111,6 +111,86 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
+    
+    /* Searchable dropdown styles */
+    .instrument-search-wrapper {
+        position: relative;
+    }
+    
+    .instrument-search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    .instrument-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: none;
+    }
+    
+    [data-bs-theme="dark"] .instrument-dropdown {
+        background: #2d3338;
+        border-color: #4b5563;
+    }
+    
+    .instrument-option {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #e5e7eb;
+        transition: background-color 0.2s;
+    }
+    
+    [data-bs-theme="dark"] .instrument-option {
+        border-bottom-color: #4b5563;
+    }
+    
+    .instrument-option:hover {
+        background-color: #f8f9fa;
+    }
+    
+    [data-bs-theme="dark"] .instrument-option:hover {
+        background-color: #374151;
+    }
+    
+    .instrument-option.selected {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .instrument-option .instrument-name {
+        font-weight: 600;
+    }
+    
+    .instrument-option .instrument-type {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-left: 0.5rem;
+    }
+    
+    .real-time-result {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #3b82f6;
+        display: none;
+    }
+    
+    [data-bs-theme="dark"] .real-time-result {
+        background: #2d3338;
+    }
 </style>
 {% endblock %}
 
@@ -137,34 +217,38 @@
         <form method="post" id="lotCalculatorForm">
             {% csrf_token %}
             <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Account Balance (USD) *</label>
-                    <input type="number" name="account_balance" class="form-control" step="0.01" required placeholder="Enter account balance">
-                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Amount should be in USD</small>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Account Balance *</label>
+                    {{ form.account_balance }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Currency *</label>
+                    {{ form.account_currency }}
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Risk Percentage *</label>
-                    <input type="number" name="risk_percentage" class="form-control" step="0.01" required placeholder="e.g., 1.0">
+                    {{ form.risk_percentage }}
                     <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Percentage of account to risk</small>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold">Stop Loss (Pips) *</label>
-                    <input type="number" name="stop_loss_pips" class="form-control" step="0.01" required placeholder="e.g., 20">
-                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Stop loss distance in pips</small>
+                    <label class="form-label fw-bold">Stop Loss (Pips/Points) *</label>
+                    {{ form.stop_loss_pips }}
+                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Stop loss distance in pips/points</small>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Instrument *</label>
-                    <select name="instrument" class="form-select" required>
-                        <option value="">Select instrument...</option>
-                        <option value="EUR/USD">EUR/USD</option>
-                        <option value="GBP/USD">GBP/USD</option>
-                        <option value="USD/JPY">USD/JPY</option>
-                        <option value="GBP/JPY">GBP/JPY</option>
-                        <option value="XAU/USD">XAU/USD (Gold)</option>
-                        <option value="BTC/USD">BTC/USD</option>
-                        <option value="ETH/USD">ETH/USD</option>
+                    <select name="instrument" id="instrument_select" class="form-select" required>
+                        <option value="">Search or select instrument...</option>
+                        {% for code, name in form.fields.instrument.choices %}
+                            {% if code %}
+                                <option value="{{ code }}" data-pip-value="{{ instruments_json|get_item:code|get_item:'pip_value' }}">{{ name }}</option>
+                            {% endif %}
+                        {% endfor %}
                     </select>
-                    <small class="form-text text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Trading instrument</small>
+                    <small class="form-text text-muted d-block mt-1">
+                        <i class="bi bi-info-circle"></i> 
+                        <span id="pip_value_display">Type to search instruments</span>
+                    </small>
                 </div>
                 <div class="col-12 mt-3">
                     <button type="submit" class="btn btn-calculate text-white w-100 w-md-auto">
@@ -173,23 +257,237 @@
                 </div>
             </div>
         </form>
+        
+        <!-- Real-time calculation result -->
+        <div id="real_time_result" class="real-time-result">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Estimated Lot Size:</strong>
+                    <span id="real_time_lot_size" class="lot-size-display" style="font-size: 1.5rem; margin-left: 0.5rem;">-</span>
+                </div>
+                <small class="text-muted">Updates as you type</small>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Recent Calculations History -->
+{% if recent_calculations %}
+<div class="calculator-card card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Calculations</h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Instrument</th>
+                        <th>Balance</th>
+                        <th>Risk %</th>
+                        <th>Stop Loss</th>
+                        <th>Lot Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for calc in recent_calculations %}
+                    <tr>
+                        <td>{{ calc.created_at|date:"M d, Y H:i" }}</td>
+                        <td><strong>{{ calc.instrument }}</strong></td>
+                        <td>{{ calc.account_balance }} {{ calc.account_currency }}</td>
+                        <td>{{ calc.risk_percentage }}%</td>
+                        <td>{{ calc.stop_loss_pips }} pips</td>
+                        <td><strong class="text-primary">{{ calc.calculated_lot_size }} lots</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
         
-{% if calculated_lot %}
+{% if result %}
 <div class="result-card card">
     <div class="card-body p-4">
         <div class="text-center mb-3">
             <h5 class="text-muted mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i>Calculated Result</h5>
-            <div class="lot-size-display mb-3">{{ calculated_lot }}</div>
-            <p class="text-muted mb-0">Recommended lot size for Deriv broker</p>
+            <div class="lot-size-display mb-3">{{ result }} lots</div>
+            <p class="text-muted mb-0">
+                Recommended lot size
+                {% if instrument_data %}
+                    <br><small>Pip/Point Value: ${{ instrument_data.pip_value }} per standard lot</small>
+                {% endif %}
+            </p>
         </div>
         <div class="d-flex justify-content-center gap-2 mt-4">
-            <button class="btn btn-primary btn-lg" onclick="navigator.clipboard.writeText('{{ calculated_lot }}'); this.innerHTML='<i class=\'bi bi-check-circle me-2\'></i>Copied!'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard me-2\'></i>Copy to Clipboard', 2000);">
+            <button class="btn btn-primary btn-lg" onclick="navigator.clipboard.writeText('{{ result }}'); this.innerHTML='<i class=\'bi bi-check-circle me-2\'></i>Copied!'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard me-2\'></i>Copy to Clipboard', 2000);">
                 <i class="bi bi-clipboard me-2"></i>Copy to Clipboard
             </button>
         </div>
     </div>
 </div>
 {% endif %}
+
+{% block extra_js %}
+<script>
+    // Instrument data from backend
+    const instruments = JSON.parse('{{ instruments_json|escapejs }}');
+    
+    // Searchable dropdown functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const instrumentSelect = document.getElementById('instrument_select');
+        const pipValueDisplay = document.getElementById('pip_value_display');
+        const realTimeResult = document.getElementById('real_time_result');
+        const realTimeLotSize = document.getElementById('real_time_lot_size');
+        
+        // Create searchable dropdown
+        const originalSelect = instrumentSelect.cloneNode(true);
+        const searchWrapper = document.createElement('div');
+        searchWrapper.className = 'instrument-search-wrapper';
+        
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'form-control instrument-search-input';
+        searchInput.placeholder = 'Type to search instruments (e.g., EURUSD, Gold, NAS100)...';
+        searchInput.autocomplete = 'off';
+        
+        const dropdown = document.createElement('div');
+        dropdown.className = 'instrument-dropdown';
+        dropdown.id = 'instrument_dropdown';
+        
+        // Replace select with searchable input
+        instrumentSelect.parentNode.insertBefore(searchWrapper, instrumentSelect);
+        searchWrapper.appendChild(searchInput);
+        searchWrapper.appendChild(dropdown);
+        instrumentSelect.style.display = 'none';
+        
+        // Populate dropdown with all options
+        function populateDropdown(filter = '') {
+            dropdown.innerHTML = '';
+            const filterUpper = filter.toUpperCase();
+            let hasResults = false;
+            
+            Array.from(originalSelect.options).forEach(option => {
+                if (option.value && (filter === '' || 
+                    option.value.toUpperCase().includes(filterUpper) || 
+                    option.text.toUpperCase().includes(filterUpper))) {
+                    const div = document.createElement('div');
+                    div.className = 'instrument-option';
+                    div.dataset.value = option.value;
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'instrument-name';
+                    nameSpan.textContent = option.text;
+                    
+                    const typeSpan = document.createElement('span');
+                    typeSpan.className = 'instrument-type';
+                    const instrumentData = instruments[option.value];
+                    if (instrumentData) {
+                        typeSpan.textContent = `(${instrumentData.type})`;
+                    }
+                    
+                    div.appendChild(nameSpan);
+                    div.appendChild(typeSpan);
+                    
+                    div.addEventListener('click', function() {
+                        selectInstrument(option.value, option.text);
+                    });
+                    
+                    dropdown.appendChild(div);
+                    hasResults = true;
+                }
+            });
+            
+            if (hasResults) {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+        
+        function selectInstrument(value, text) {
+            instrumentSelect.value = value;
+            searchInput.value = text;
+            dropdown.style.display = 'none';
+            
+            // Update pip value display
+            const instrumentData = instruments[value];
+            if (instrumentData) {
+                pipValueDisplay.innerHTML = `<strong>Pip/Point Value:</strong> $${instrumentData.pip_value} per standard lot`;
+            } else {
+                pipValueDisplay.textContent = 'Type to search instruments';
+            }
+            
+            // Trigger real-time calculation
+            calculateRealTime();
+        }
+        
+        // Search input event
+        searchInput.addEventListener('input', function(e) {
+            const filter = e.target.value;
+            if (filter.length > 0) {
+                populateDropdown(filter);
+            } else {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchWrapper.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        // Real-time calculation
+        function calculateRealTime() {
+            const accountBalance = parseFloat(document.getElementById('account_balance')?.value || 0);
+            const riskPercentage = parseFloat(document.getElementById('risk_percentage')?.value || 0);
+            const stopLossPips = parseFloat(document.getElementById('stop_loss_pips')?.value || 0);
+            const instrumentCode = instrumentSelect.value;
+            
+            if (accountBalance > 0 && riskPercentage > 0 && stopLossPips > 0 && instrumentCode) {
+                const instrumentData = instruments[instrumentCode];
+                if (instrumentData) {
+                    const riskAmount = accountBalance * (riskPercentage / 100);
+                    const pipValue = instrumentData.pip_value;
+                    const lotSize = riskAmount / (stopLossPips * pipValue);
+                    
+                    if (lotSize > 0 && isFinite(lotSize)) {
+                        realTimeLotSize.textContent = lotSize.toFixed(2) + ' lots';
+                        realTimeResult.style.display = 'block';
+                    } else {
+                        realTimeResult.style.display = 'none';
+                    }
+                } else {
+                    realTimeResult.style.display = 'none';
+                }
+            } else {
+                realTimeResult.style.display = 'none';
+            }
+        }
+        
+        // Add event listeners for real-time calculation
+        ['account_balance', 'risk_percentage', 'stop_loss_pips'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', calculateRealTime);
+                input.addEventListener('change', calculateRealTime);
+            }
+        });
+        
+        instrumentSelect.addEventListener('change', function() {
+            const selectedOption = originalSelect.querySelector(`option[value="${this.value}"]`);
+            if (selectedOption) {
+                searchInput.value = selectedOption.text;
+                selectInstrument(this.value, selectedOption.text);
+            }
+        });
+        
+        // Initialize dropdown
+        populateDropdown();
+    });
+</script>
 {% endblock %}

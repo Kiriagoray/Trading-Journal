@@ -25,6 +25,16 @@ urlpatterns = [
     path('favicon.ico', serve_favicon, name='favicon'),
 ]
 
-# Serve media files in development
+# Serve media files
+# In development, use Django's static file serving
+# In production, use a view to serve media files securely
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # In production, serve media files through a view
+    from django.views.static import serve
+    from django.urls import re_path
+    
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

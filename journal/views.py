@@ -1,17 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Q, Count, Avg, Sum, Case, When, IntegerField
+from django.db.models import Q, Count, Avg, Sum, Case, When, IntegerField, Max
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.conf import settings
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import csv
-from .models import AfterTradeEntry, PreTradeEntry, BacktestEntry, StrategyTag, FilterPreset, LotSizeCalculation
+from .models import (
+    AfterTradeEntry, PreTradeEntry, BacktestEntry, StrategyTag, FilterPreset, 
+    LotSizeCalculation, JournalField, JournalFieldOption, JournalFieldValue
+)
 
 
 # Authentication Views
@@ -114,34 +116,189 @@ def dashboard(request):
 # After Trade Views
 @login_required
 def after_trade_list(request):
-    """List after trade entries"""
+    """List after trade entries with advanced filtering, search, and sorting"""
+    from .utils import get_user_journal_fields, search_entries_with_custom_fields, filter_entries_by_custom_field
+    from .models import JournalFieldValue
+    from datetime import datetime
+    
     entries = AfterTradeEntry.objects.filter(user=request.user)
     
-    # Basic filtering
-    pair = request.GET.get('pair', '')
-    session = request.GET.get('session', '')
-    bias = request.GET.get('bias', '')
-    outcome = request.GET.get('outcome', '')
-    search = request.GET.get('search', '')
+    # Get custom fields for this journal type
+    custom_fields = get_user_journal_fields(request.user, 'after_trade')
     
-    if pair:
-        entries = entries.filter(pair__icontains=pair)
-    if session:
-        entries = entries.filter(session=session)
-    if bias:
-        entries = entries.filter(bias=bias)
-    if outcome:
-        entries = entries.filter(outcome=outcome)
+    # Search
+    search = request.GET.get('search', '').strip()
     if search:
-        entries = entries.filter(Q(observations__icontains=search) | Q(pair__icontains=search) | Q(major_impact_news__icontains=search))
+        entries = search_entries_with_custom_fields(entries, search, 'after_trade', request.user)
     
+    # System field filters
+    pair_filter = request.GET.get('pair', '').strip()
+    if pair_filter:
+        entries = entries.filter(pair__icontains=pair_filter)
+    
+    outcome_filter = request.GET.get('outcome', '').strip()
+    if outcome_filter:
+        entries = entries.filter(outcome=outcome_filter)
+    
+    date_from = request.GET.get('date_from', '').strip()
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            entries = entries.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    date_to = request.GET.get('date_to', '').strip()
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            entries = entries.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Custom field filters
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filter_value = request.GET.get(field_name, '').strip()
+        
+        if filter_value:
+            if field.field_type in ['select', 'multi_select']:
+                entries = filter_entries_by_custom_field(entries, field, filter_value, 'after_trade')
+            elif field.field_type in ['number', 'decimal']:
+                min_val = request.GET.get(f'{field_name}_min', '').strip()
+                max_val = request.GET.get(f'{field_name}_max', '').strip()
+                if min_val or max_val:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if min_val:
+                            try:
+                                field_values = field_values.filter(value_number__gte=float(min_val))
+                            except ValueError:
+                                pass
+                        if max_val:
+                            try:
+                                field_values = field_values.filter(value_number__lte=float(max_val))
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'date':
+                date_min = request.GET.get(f'{field_name}_min', '').strip()
+                date_max = request.GET.get(f'{field_name}_max', '').strip()
+                if date_min or date_max:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if date_min:
+                            try:
+                                date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__gte=date_min_obj)
+                            except ValueError:
+                                pass
+                        if date_max:
+                            try:
+                                date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__lte=date_max_obj)
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'checkbox':
+                if filter_value.lower() in ['true', '1', 'yes']:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        matching_ids = list(JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids,
+                            value_boolean=True
+                        ).values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+    
+    # Sorting
+    sort_by = request.GET.get('sort', 'date_desc').strip()
+    sort_field = None
+    sort_order = 'desc'
+    
+    if sort_by:
+        if '_' in sort_by:
+            sort_field_name, sort_order = sort_by.rsplit('_', 1)
+        else:
+            sort_field_name = sort_by
+            sort_order = 'desc'
+        
+        if sort_field_name == 'date':
+            entries = entries.order_by(f'-date' if sort_order == 'desc' else 'date')
+        elif sort_field_name == 'pair':
+            entries = entries.order_by(f'-pair' if sort_order == 'desc' else 'pair')
+        elif sort_field_name == 'outcome':
+            entries = entries.order_by(f'-outcome' if sort_order == 'desc' else 'outcome')
+        elif sort_field_name.startswith('custom_'):
+            # Custom field sorting
+            field_name = sort_field_name.replace('custom_', '')
+            try:
+                field = custom_fields.get(name=field_name)
+                if field and field.field_type in ['text', 'textarea', 'select', 'number', 'decimal', 'date']:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if field.field_type in ['number', 'decimal']:
+                            sorted_values = field_values.order_by(f'-value_number' if sort_order == 'desc' else 'value_number')
+                        elif field.field_type == 'date':
+                            sorted_values = field_values.order_by(f'-value_date' if sort_order == 'desc' else 'value_date')
+                        else:
+                            sorted_values = field_values.order_by(f'-value_text' if sort_order == 'desc' else 'value_text')
+                        sorted_ids = list(sorted_values.values_list('entry_id', flat=True))
+                        # Preserve order by creating a mapping
+                        id_order = {eid: idx for idx, eid in enumerate(sorted_ids)}
+                        entries_list = list(entries)
+                        entries_list.sort(key=lambda e: id_order.get(e.id, 999999))
+                        # Convert back to queryset (this is a limitation, but works for pagination)
+                        entries = entries.filter(id__in=sorted_ids)
+            except Exception:
+                pass
+    
+    # Get unique pairs for filter dropdown
+    unique_pairs = sorted(set(AfterTradeEntry.objects.filter(user=request.user).values_list('pair', flat=True).distinct()))
+    
+    # Pagination
     paginator = Paginator(entries, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Build filter context
+    filters = {
+        'search': search,
+        'pair': pair_filter,
+        'outcome': outcome_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'sort': sort_by,
+    }
+    
+    # Add custom field filter values
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filters[field_name] = request.GET.get(field_name, '').strip()
+        if field.field_type in ['number', 'decimal', 'date']:
+            filters[f'{field_name}_min'] = request.GET.get(f'{field_name}_min', '').strip()
+            filters[f'{field_name}_max'] = request.GET.get(f'{field_name}_max', '').strip()
+    
     context = {
         'page_obj': page_obj,
-        'filters': {'pair': pair, 'session': session, 'bias': bias, 'outcome': outcome, 'search': search}
+        'filters': filters,
+        'custom_fields': custom_fields,
+        'unique_pairs': unique_pairs,
+        'total_results': paginator.count,
     }
     return render(request, 'journal/after_trade_list.html', context)
 
@@ -150,14 +307,24 @@ def after_trade_list(request):
 def after_trade_create(request):
     """Create after trade entry"""
     from .forms import AfterTradeEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     
     if request.method == 'POST':
-        form = AfterTradeEntryForm(request.POST, request.FILES)
+        form = AfterTradeEntryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             entry = form.save(commit=False)
             entry.user = request.user
             entry.save()
             form.save_m2m()  # Save many-to-many relationships
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'after_trade')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             # Auto-generate AI summary
             try:
                 from .services import TradeSummaryGenerator
@@ -167,32 +334,54 @@ def after_trade_create(request):
                 messages.success(request, 'After Trade entry created successfully!')
             return redirect('after_trade_detail', pk=entry.pk)
     else:
-        form = AfterTradeEntryForm()
+        form = AfterTradeEntryForm(user=request.user)
     return render(request, 'journal/after_trade_form.html', {'form': form})
 
 
 @login_required
 def after_trade_detail(request, pk):
     """View after trade entry detail"""
+    from .utils import get_all_field_values_for_entry
     entry = get_object_or_404(AfterTradeEntry, pk=pk, user=request.user)
-    return render(request, 'journal/after_trade_detail.html', {'entry': entry})
+    # Get related entries (same pair)
+    related = AfterTradeEntry.objects.filter(
+        user=request.user,
+        pair=entry.pair
+    ).exclude(pk=entry.pk).order_by('-date')[:5]
+    # Get custom field values
+    custom_field_values = get_all_field_values_for_entry(entry)
+    return render(request, 'journal/after_trade_detail.html', {
+        'entry': entry,
+        'related': related,
+        'custom_field_values': custom_field_values
+    })
 
 
 @login_required
 def after_trade_edit(request, pk):
     """Edit after trade entry"""
     from .forms import AfterTradeEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     entry = get_object_or_404(AfterTradeEntry, pk=pk, user=request.user)
     
     if request.method == 'POST':
-        form = AfterTradeEntryForm(request.POST, request.FILES, instance=entry)
+        form = AfterTradeEntryForm(request.POST, request.FILES, instance=entry, user=request.user)
         if form.is_valid():
             entry = form.save()
             form.save_m2m()
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'after_trade')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             messages.success(request, 'Entry updated successfully!')
             return redirect('after_trade_detail', pk=entry.pk)
     else:
-        form = AfterTradeEntryForm(instance=entry)
+        form = AfterTradeEntryForm(instance=entry, user=request.user)
     return render(request, 'journal/after_trade_form.html', {'form': form, 'entry': entry})
 
 
@@ -247,33 +436,159 @@ def after_trade_export_csv(request):
 # Pre Trade Views
 @login_required
 def pre_trade_list(request):
-    """List pre trade entries"""
+    """List pre trade entries with advanced filtering, search, and sorting"""
+    from .utils import get_user_journal_fields, search_entries_with_custom_fields, filter_entries_by_custom_field
+    from .models import JournalFieldValue
+    from datetime import datetime
+    
     entries = PreTradeEntry.objects.filter(user=request.user)
     
-    pair = request.GET.get('pair', '')
-    bias = request.GET.get('bias', '')
-    trade_taken = request.GET.get('trade_taken', '')
-    date_from = request.GET.get('date_from', '')
-    search = request.GET.get('search', '')
+    # Get custom fields for this journal type
+    custom_fields = get_user_journal_fields(request.user, 'pre_trade')
     
-    if pair:
-        entries = entries.filter(pair__icontains=pair)
-    if bias:
-        entries = entries.filter(bias=bias)
-    if trade_taken:
-        entries = entries.filter(trade_taken=(trade_taken == 'true'))
-    if date_from:
-        entries = entries.filter(date__gte=date_from)
+    # Search
+    search = request.GET.get('search', '').strip()
     if search:
-        entries = entries.filter(Q(notes__icontains=search) | Q(pair__icontains=search) | Q(reason_for_taking_or_not__icontains=search))
+        entries = search_entries_with_custom_fields(entries, search, 'pre_trade', request.user)
     
+    # System field filters
+    pair_filter = request.GET.get('pair', '').strip()
+    if pair_filter:
+        entries = entries.filter(pair__icontains=pair_filter)
+    
+    bias_filter = request.GET.get('bias', '').strip()
+    if bias_filter:
+        entries = entries.filter(bias=bias_filter)
+    
+    date_from = request.GET.get('date_from', '').strip()
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            entries = entries.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    date_to = request.GET.get('date_to', '').strip()
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            entries = entries.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Custom field filters (same logic as after_trade_list)
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filter_value = request.GET.get(field_name, '').strip()
+        
+        if filter_value:
+            if field.field_type in ['select', 'multi_select']:
+                entries = filter_entries_by_custom_field(entries, field, filter_value, 'pre_trade')
+            elif field.field_type in ['number', 'decimal']:
+                min_val = request.GET.get(f'{field_name}_min', '').strip()
+                max_val = request.GET.get(f'{field_name}_max', '').strip()
+                if min_val or max_val:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if min_val:
+                            try:
+                                field_values = field_values.filter(value_number__gte=float(min_val))
+                            except ValueError:
+                                pass
+                        if max_val:
+                            try:
+                                field_values = field_values.filter(value_number__lte=float(max_val))
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'date':
+                date_min = request.GET.get(f'{field_name}_min', '').strip()
+                date_max = request.GET.get(f'{field_name}_max', '').strip()
+                if date_min or date_max:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if date_min:
+                            try:
+                                date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__gte=date_min_obj)
+                            except ValueError:
+                                pass
+                        if date_max:
+                            try:
+                                date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__lte=date_max_obj)
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'checkbox':
+                if filter_value.lower() in ['true', '1', 'yes']:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        matching_ids = list(JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids,
+                            value_boolean=True
+                        ).values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+    
+    # Sorting
+    sort_by = request.GET.get('sort', 'date_desc').strip()
+    if sort_by:
+        if '_' in sort_by:
+            sort_field_name, sort_order = sort_by.rsplit('_', 1)
+        else:
+            sort_field_name = sort_by
+            sort_order = 'desc'
+        
+        if sort_field_name == 'date':
+            entries = entries.order_by(f'-date' if sort_order == 'desc' else 'date')
+        elif sort_field_name == 'pair':
+            entries = entries.order_by(f'-pair' if sort_order == 'desc' else 'pair')
+        elif sort_field_name == 'bias':
+            entries = entries.order_by(f'-bias' if sort_order == 'desc' else 'bias')
+    
+    # Get unique pairs for filter dropdown
+    unique_pairs = sorted(set(PreTradeEntry.objects.filter(user=request.user).values_list('pair', flat=True).distinct()))
+    
+    # Pagination
     paginator = Paginator(entries, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Build filter context
+    filters = {
+        'search': search,
+        'pair': pair_filter,
+        'bias': bias_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'sort': sort_by,
+    }
+    
+    # Add custom field filter values
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filters[field_name] = request.GET.get(field_name, '').strip()
+        if field.field_type in ['number', 'decimal', 'date']:
+            filters[f'{field_name}_min'] = request.GET.get(f'{field_name}_min', '').strip()
+            filters[f'{field_name}_max'] = request.GET.get(f'{field_name}_max', '').strip()
+    
     context = {
         'page_obj': page_obj,
-        'filters': {'pair': pair, 'bias': bias, 'trade_taken': trade_taken, 'date_from': date_from, 'search': search}
+        'filters': filters,
+        'custom_fields': custom_fields,
+        'unique_pairs': unique_pairs,
+        'total_results': paginator.count,
     }
     return render(request, 'journal/pre_trade_list.html', context)
 
@@ -282,41 +597,67 @@ def pre_trade_list(request):
 def pre_trade_create(request):
     """Create pre trade entry"""
     from .forms import PreTradeEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     
     if request.method == 'POST':
-        form = PreTradeEntryForm(request.POST, request.FILES)
+        form = PreTradeEntryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             entry = form.save(commit=False)
             entry.user = request.user
             entry.save()
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'pre_trade')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             messages.success(request, 'Pre Trade entry created successfully!')
             return redirect('pre_trade_detail', pk=entry.pk)
     else:
-        form = PreTradeEntryForm()
+        form = PreTradeEntryForm(user=request.user)
     return render(request, 'journal/pre_trade_form.html', {'form': form})
 
 
 @login_required
 def pre_trade_detail(request, pk):
     """View pre trade entry detail"""
+    from .utils import get_all_field_values_for_entry
     entry = get_object_or_404(PreTradeEntry, pk=pk, user=request.user)
-    return render(request, 'journal/pre_trade_detail.html', {'entry': entry})
+    # Get custom field values
+    custom_field_values = get_all_field_values_for_entry(entry)
+    return render(request, 'journal/pre_trade_detail.html', {
+        'entry': entry,
+        'custom_field_values': custom_field_values
+    })
 
 
 @login_required
 def pre_trade_edit(request, pk):
     """Edit pre trade entry"""
     from .forms import PreTradeEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     entry = get_object_or_404(PreTradeEntry, pk=pk, user=request.user)
     
     if request.method == 'POST':
-        form = PreTradeEntryForm(request.POST, request.FILES, instance=entry)
+        form = PreTradeEntryForm(request.POST, request.FILES, instance=entry, user=request.user)
         if form.is_valid():
             entry = form.save()
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'pre_trade')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             messages.success(request, 'Entry updated successfully!')
             return redirect('pre_trade_detail', pk=entry.pk)
     else:
-        form = PreTradeEntryForm(instance=entry)
+        form = PreTradeEntryForm(instance=entry, user=request.user)
     return render(request, 'journal/pre_trade_form.html', {'form': form, 'entry': entry})
 
 
@@ -358,30 +699,159 @@ def pre_trade_export_csv(request):
 # Backtest Views
 @login_required
 def backtest_list(request):
-    """List backtest entries"""
+    """List backtest entries with advanced filtering, search, and sorting"""
+    from .utils import get_user_journal_fields, search_entries_with_custom_fields, filter_entries_by_custom_field
+    from .models import JournalFieldValue
+    from datetime import datetime
+    
     entries = BacktestEntry.objects.filter(user=request.user)
     
-    pair = request.GET.get('pair', '')
-    outcome = request.GET.get('outcome', '')
-    date_from = request.GET.get('date_from', '')
-    search = request.GET.get('search', '')
+    # Get custom fields for this journal type
+    custom_fields = get_user_journal_fields(request.user, 'backtest')
     
-    if pair:
-        entries = entries.filter(pair__icontains=pair)
-    if outcome:
-        entries = entries.filter(outcome=outcome)
-    if date_from:
-        entries = entries.filter(date__gte=date_from)
+    # Search
+    search = request.GET.get('search', '').strip()
     if search:
-        entries = entries.filter(Q(notes__icontains=search) | Q(pair__icontains=search) | Q(strategy_name__icontains=search))
+        entries = search_entries_with_custom_fields(entries, search, 'backtest', request.user)
     
+    # System field filters
+    pair_filter = request.GET.get('pair', '').strip()
+    if pair_filter:
+        entries = entries.filter(pair__icontains=pair_filter)
+    
+    bias_filter = request.GET.get('bias', '').strip()
+    if bias_filter:
+        entries = entries.filter(htf_bias=bias_filter)
+    
+    date_from = request.GET.get('date_from', '').strip()
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            entries = entries.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    date_to = request.GET.get('date_to', '').strip()
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            entries = entries.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Custom field filters (same logic as after_trade_list)
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filter_value = request.GET.get(field_name, '').strip()
+        
+        if filter_value:
+            if field.field_type in ['select', 'multi_select']:
+                entries = filter_entries_by_custom_field(entries, field, filter_value, 'backtest')
+            elif field.field_type in ['number', 'decimal']:
+                min_val = request.GET.get(f'{field_name}_min', '').strip()
+                max_val = request.GET.get(f'{field_name}_max', '').strip()
+                if min_val or max_val:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if min_val:
+                            try:
+                                field_values = field_values.filter(value_number__gte=float(min_val))
+                            except ValueError:
+                                pass
+                        if max_val:
+                            try:
+                                field_values = field_values.filter(value_number__lte=float(max_val))
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'date':
+                date_min = request.GET.get(f'{field_name}_min', '').strip()
+                date_max = request.GET.get(f'{field_name}_max', '').strip()
+                if date_min or date_max:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        field_values = JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids
+                        )
+                        if date_min:
+                            try:
+                                date_min_obj = datetime.strptime(date_min, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__gte=date_min_obj)
+                            except ValueError:
+                                pass
+                        if date_max:
+                            try:
+                                date_max_obj = datetime.strptime(date_max, '%Y-%m-%d').date()
+                                field_values = field_values.filter(value_date__lte=date_max_obj)
+                            except ValueError:
+                                pass
+                        matching_ids = list(field_values.values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+            elif field.field_type == 'checkbox':
+                if filter_value.lower() in ['true', '1', 'yes']:
+                    entry_ids = list(entries.values_list('id', flat=True))
+                    if entry_ids:
+                        matching_ids = list(JournalFieldValue.objects.filter(
+                            field=field,
+                            entry_id__in=entry_ids,
+                            value_boolean=True
+                        ).values_list('entry_id', flat=True))
+                        entries = entries.filter(id__in=matching_ids)
+    
+    # Sorting
+    sort_by = request.GET.get('sort', 'date_desc').strip()
+    if sort_by:
+        if '_' in sort_by:
+            sort_field_name, sort_order = sort_by.rsplit('_', 1)
+        else:
+            sort_field_name = sort_by
+            sort_order = 'desc'
+        
+        if sort_field_name == 'date':
+            entries = entries.order_by(f'-date' if sort_order == 'desc' else 'date')
+        elif sort_field_name == 'pair':
+            entries = entries.order_by(f'-pair' if sort_order == 'desc' else 'pair')
+        elif sort_field_name == 'bias':
+            entries = entries.order_by(f'-htf_bias' if sort_order == 'desc' else 'htf_bias')
+    
+    # Get unique pairs for filter dropdown
+    unique_pairs = sorted(set(BacktestEntry.objects.filter(user=request.user).values_list('pair', flat=True).distinct()))
+    
+    # Pagination
     paginator = Paginator(entries, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Build filter context
+    filters = {
+        'search': search,
+        'pair': pair_filter,
+        'bias': bias_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'sort': sort_by,
+    }
+    
+    # Add custom field filter values
+    for field in custom_fields:
+        field_name = f'custom_{field.name}'
+        filters[field_name] = request.GET.get(field_name, '').strip()
+        if field.field_type in ['number', 'decimal', 'date']:
+            filters[f'{field_name}_min'] = request.GET.get(f'{field_name}_min', '').strip()
+            filters[f'{field_name}_max'] = request.GET.get(f'{field_name}_max', '').strip()
+    
     context = {
         'page_obj': page_obj,
-        'filters': {'pair': pair, 'outcome': outcome, 'date_from': date_from, 'search': search}
+        'filters': filters,
+        'custom_fields': custom_fields,
+        'unique_pairs': unique_pairs,
+        'total_results': paginator.count,
     }
     return render(request, 'journal/backtest_list.html', context)
 
@@ -390,41 +860,67 @@ def backtest_list(request):
 def backtest_create(request):
     """Create backtest entry"""
     from .forms import BacktestEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     
     if request.method == 'POST':
-        form = BacktestEntryForm(request.POST, request.FILES)
+        form = BacktestEntryForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             entry = form.save(commit=False)
             entry.user = request.user
             entry.save()
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'backtest')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             messages.success(request, 'Backtest entry created successfully!')
             return redirect('backtest_detail', pk=entry.pk)
     else:
-        form = BacktestEntryForm()
+        form = BacktestEntryForm(user=request.user)
     return render(request, 'journal/backtest_form.html', {'form': form})
 
 
 @login_required
 def backtest_detail(request, pk):
     """View backtest entry detail"""
+    from .utils import get_all_field_values_for_entry
     entry = get_object_or_404(BacktestEntry, pk=pk, user=request.user)
-    return render(request, 'journal/backtest_detail.html', {'entry': entry})
+    # Get custom field values
+    custom_field_values = get_all_field_values_for_entry(entry)
+    return render(request, 'journal/backtest_detail.html', {
+        'entry': entry,
+        'custom_field_values': custom_field_values
+    })
 
 
 @login_required
 def backtest_edit(request, pk):
     """Edit backtest entry"""
     from .forms import BacktestEntryForm
+    from .utils import save_field_value_for_entry, get_user_journal_fields
     entry = get_object_or_404(BacktestEntry, pk=pk, user=request.user)
     
     if request.method == 'POST':
-        form = BacktestEntryForm(request.POST, request.FILES, instance=entry)
+        form = BacktestEntryForm(request.POST, request.FILES, instance=entry, user=request.user)
         if form.is_valid():
             entry = form.save()
+            
+            # Save custom field values
+            custom_fields = get_user_journal_fields(request.user, 'backtest')
+            for field in custom_fields:
+                field_key = f'custom_{field.name}'
+                if field_key in form.cleaned_data:
+                    value = form.cleaned_data[field_key]
+                    save_field_value_for_entry(entry, field, value)
+            
             messages.success(request, 'Entry updated successfully!')
             return redirect('backtest_detail', pk=entry.pk)
     else:
-        form = BacktestEntryForm(instance=entry)
+        form = BacktestEntryForm(instance=entry, user=request.user)
     return render(request, 'journal/backtest_form.html', {'form': form, 'entry': entry})
 
 
@@ -506,16 +1002,47 @@ def daily_summary(request, year, month, day):
 def lot_size_calculator(request):
     """Lot size calculator tool"""
     from .forms import LotSizeCalculatorForm
+    from .instrument_data import INSTRUMENTS, get_instrument_data
+    import json
     
     if request.method == 'POST':
         form = LotSizeCalculatorForm(request.POST)
         if form.is_valid():
             result = form.calculate_lot_size()
-            return render(request, 'journal/lot_size_calculator.html', {'form': form, 'result': result})
+            instrument_code = form.cleaned_data.get('instrument', 'EURUSD')
+            instrument_data = get_instrument_data(instrument_code)
+            
+            # Save calculation history
+            if result:
+                LotSizeCalculation.objects.create(
+                    user=request.user,
+                    instrument=instrument_data['name'] if instrument_data else instrument_code,
+                    account_balance=form.cleaned_data['account_balance'],
+                    account_currency=form.cleaned_data.get('account_currency', 'USD'),
+                    risk_percentage=form.cleaned_data['risk_percentage'],
+                    stop_loss_pips=form.cleaned_data['stop_loss_pips'],
+                    calculated_lot_size=result
+                )
+            
+            return render(request, 'journal/lot_size_calculator.html', {
+                'form': form, 
+                'result': result,
+                'instrument_data': instrument_data,
+                'instruments_json': json.dumps(INSTRUMENTS)
+            })
     else:
         form = LotSizeCalculatorForm()
     
-    return render(request, 'journal/lot_size_calculator.html', {'form': form})
+    # Get recent calculations for this user
+    recent_calculations = LotSizeCalculation.objects.filter(
+        user=request.user
+    ).order_by('-created_at')[:10]
+    
+    return render(request, 'journal/lot_size_calculator.html', {
+        'form': form,
+        'instruments_json': json.dumps(INSTRUMENTS),
+        'recent_calculations': recent_calculations
+    })
 
 
 @login_required
@@ -919,3 +1446,173 @@ def settings_page(request):
         return redirect('settings')
     
     return render(request, 'journal/settings.html')
+
+
+# Property Management Views for Dynamic Fields
+@login_required
+def manage_properties(request, journal_type):
+    """Manage custom fields/properties for a journal type"""
+    if journal_type not in ['after_trade', 'pre_trade', 'backtest']:
+        messages.error(request, 'Invalid journal type')
+        return redirect('dashboard')
+    
+    fields = JournalField.objects.filter(
+        user=request.user,
+        journal_type=journal_type
+    ).order_by('order', 'display_name')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'create':
+            # Create new field
+            name = request.POST.get('name', '').strip().lower().replace(' ', '_')
+            display_name = request.POST.get('display_name', '').strip()
+            field_type = request.POST.get('field_type', 'text')
+            is_required = request.POST.get('is_required') == 'on'
+            help_text = request.POST.get('help_text', '').strip()
+            default_value = request.POST.get('default_value', '').strip()
+            
+            if name and display_name:
+                # Get max order
+                max_order = fields.aggregate(Max('order'))['order__max'] or 0
+                
+                field = JournalField.objects.create(
+                    user=request.user,
+                    journal_type=journal_type,
+                    name=name,
+                    display_name=display_name,
+                    field_type=field_type,
+                    is_required=is_required,
+                    help_text=help_text,
+                    default_value=default_value,
+                    order=max_order + 1
+                )
+                
+                # If select/multiselect, add options
+                if field_type in ['select', 'multiselect']:
+                    options_text = request.POST.get('options', '').strip()
+                    if options_text:
+                        options_list = [opt.strip() for opt in options_text.split('\n') if opt.strip()]
+                        for idx, option in enumerate(options_list):
+                            JournalFieldOption.objects.create(
+                                field=field,
+                                value=option.lower().replace(' ', '_'),
+                                display_label=option,
+                                order=idx
+                            )
+                
+                messages.success(request, f'Field "{display_name}" created successfully!')
+                return redirect('manage_properties', journal_type=journal_type)
+        
+        elif action == 'update':
+            # Update field
+            field_id = request.POST.get('field_id')
+            try:
+                field = JournalField.objects.get(pk=field_id, user=request.user)
+                field.display_name = request.POST.get('display_name', '').strip()
+                field.is_required = request.POST.get('is_required') == 'on'
+                field.help_text = request.POST.get('help_text', '').strip()
+                field.default_value = request.POST.get('default_value', '').strip()
+                field.save()
+                messages.success(request, 'Field updated successfully!')
+            except JournalField.DoesNotExist:
+                messages.error(request, 'Field not found')
+        
+        elif action == 'delete':
+            # Delete field
+            field_id = request.POST.get('field_id')
+            try:
+                field = JournalField.objects.get(pk=field_id, user=request.user)
+                field_name = field.display_name
+                field.delete()
+                messages.success(request, f'Field "{field_name}" deleted successfully!')
+            except JournalField.DoesNotExist:
+                messages.error(request, 'Field not found')
+        
+        elif action == 'reorder':
+            # Reorder fields
+            field_orders = request.POST.getlist('field_order[]')
+            for idx, field_id in enumerate(field_orders):
+                try:
+                    field = JournalField.objects.get(pk=field_id, user=request.user)
+                    field.order = idx
+                    field.save()
+                except JournalField.DoesNotExist:
+                    pass
+            messages.success(request, 'Field order updated!')
+            return JsonResponse({'success': True})
+        
+        return redirect('manage_properties', journal_type=journal_type)
+    
+    journal_type_display = dict(JournalField.JOURNAL_TYPE_CHOICES).get(journal_type, journal_type)
+    context = {
+        'fields': fields,
+        'journal_type': journal_type,
+        'journal_type_display': journal_type_display,
+        'field_types': JournalField.FIELD_TYPE_CHOICES,
+    }
+    return render(request, 'journal/manage_properties.html', context)
+
+
+@login_required
+def manage_field_options(request, field_id):
+    """Manage options for a select/multi-select field"""
+    try:
+        field = JournalField.objects.get(pk=field_id, user=request.user)
+    except JournalField.DoesNotExist:
+        messages.error(request, 'Field not found')
+        return redirect('dashboard')
+    
+    if field.field_type not in ['select', 'multiselect']:
+        messages.error(request, 'This field type does not support options')
+        return redirect('manage_properties', journal_type=field.journal_type)
+    
+    options = field.options.all().order_by('order', 'display_label')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add':
+            value = request.POST.get('value', '').strip().lower().replace(' ', '_')
+            display_label = request.POST.get('display_label', '').strip()
+            color = request.POST.get('color', '#6c757d')
+            
+            if value and display_label:
+                max_order = options.aggregate(Max('order'))['order__max'] or 0
+                JournalFieldOption.objects.create(
+                    field=field,
+                    value=value,
+                    display_label=display_label,
+                    color=color,
+                    order=max_order + 1
+                )
+                messages.success(request, 'Option added successfully!')
+        
+        elif action == 'delete':
+            option_id = request.POST.get('option_id')
+            try:
+                option = JournalFieldOption.objects.get(pk=option_id, field=field)
+                option.delete()
+                messages.success(request, 'Option deleted successfully!')
+            except JournalFieldOption.DoesNotExist:
+                messages.error(request, 'Option not found')
+        
+        elif action == 'reorder':
+            option_orders = request.POST.getlist('option_order[]')
+            for idx, option_id in enumerate(option_orders):
+                try:
+                    option = JournalFieldOption.objects.get(pk=option_id, field=field)
+                    option.order = idx
+                    option.save()
+                except JournalFieldOption.DoesNotExist:
+                    pass
+            return JsonResponse({'success': True})
+        
+        return redirect('manage_field_options', field_id=field_id)
+    
+    context = {
+        'field': field,
+        'options': options,
+    }
+    return render(request, 'journal/manage_field_options.html', context)

@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     AfterTradeEntry, PreTradeEntry, BacktestEntry, 
     StrategyTag, FilterPreset, LotSizeCalculation,
-    ChoiceCategory, ChoiceOption, CommonMistakeLog, TradeTemplate
+    ChoiceCategory, ChoiceOption, CommonMistakeLog, TradeTemplate,
+    JournalField, JournalFieldOption, JournalFieldValue
 )
 
 
@@ -111,10 +112,11 @@ class FilterPresetAdmin(admin.ModelAdmin):
 
 @admin.register(LotSizeCalculation)
 class LotSizeCalculationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'instrument', 'account_balance', 'risk_percentage', 'calculated_lot_size', 'created_at']
-    list_filter = ['instrument', 'created_at', 'user']
+    list_display = ['user', 'instrument', 'account_balance', 'account_currency', 'risk_percentage', 'stop_loss_pips', 'calculated_lot_size', 'created_at']
+    list_filter = ['instrument', 'account_currency', 'created_at', 'user']
     search_fields = ['user__username', 'instrument']
     readonly_fields = ['created_at']
+    ordering = ['-created_at']
 
 
 @admin.register(CommonMistakeLog)
@@ -155,4 +157,45 @@ class TradeTemplateAdmin(admin.ModelAdmin):
     list_filter = ['user', 'created_at']
     search_fields = ['name', 'pair', 'user__username']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(JournalField)
+class JournalFieldAdmin(admin.ModelAdmin):
+    list_display = ['display_name', 'name', 'journal_type', 'field_type', 'user', 'is_required', 'is_active', 'order']
+    list_filter = ['journal_type', 'field_type', 'is_required', 'is_active', 'user']
+    search_fields = ['name', 'display_name', 'user__username']
+    ordering = ['journal_type', 'order', 'display_name']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('user', 'journal_type', 'name', 'display_name', 'field_type')
+        }),
+        ('Field Configuration', {
+            'fields': ('is_required', 'help_text', 'default_value', 'order', 'is_active')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(JournalFieldOption)
+class JournalFieldOptionAdmin(admin.ModelAdmin):
+    list_display = ['display_label', 'field', 'value', 'order', 'color']
+    list_filter = ['field', 'field__journal_type']
+    search_fields = ['display_label', 'value', 'field__display_name']
+    ordering = ['field', 'order', 'display_label']
+
+
+@admin.register(JournalFieldValue)
+class JournalFieldValueAdmin(admin.ModelAdmin):
+    list_display = ['field', 'entry_type', 'entry_id', 'get_value_display', 'created_at']
+    list_filter = ['entry_type', 'field', 'field__journal_type', 'created_at']
+    search_fields = ['field__display_name', 'value_text', 'field__user__username']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def get_value_display(self, obj):
+        return obj.get_value_display()
+    get_value_display.short_description = 'Value'
 

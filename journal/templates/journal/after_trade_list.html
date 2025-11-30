@@ -1,4 +1,5 @@
 {% extends 'journal/base_dashboard.html' %}
+{% load journal_extras %}
 
 {% block title %}After Trade Entries - JournalX{% endblock %}
 {% block page_title %}After Trade Entries{% endblock %}
@@ -165,55 +166,165 @@
     </div>
 </div>
 
-<!-- Filters -->
-<div class="filter-card card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-funnel-fill me-2"></i>Filters</h5>
-    </div>
+<!-- Search Bar -->
+<div class="card mb-3">
     <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Pair</label>
-                <input type="text" name="pair" class="form-control" value="{{ filters.pair }}" placeholder="e.g., EURUSD">
+        <form method="get" class="row g-2">
+            <div class="col-md-10">
+                <input type="text" name="search" class="form-control form-control-lg" 
+                       value="{{ filters.search }}" placeholder="Search entries by pair, outcome, notes, or custom fields...">
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-semibold">Session</label>
-                <select name="session" class="form-select">
-                    <option value="">All</option>
-                    <option value="Asian" {% if filters.session == 'Asian' %}selected{% endif %}>Asian</option>
-                    <option value="London" {% if filters.session == 'London' %}selected{% endif %}>London</option>
-                    <option value="NewYork" {% if filters.session == 'NewYork' %}selected{% endif %}>New York</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold">Bias</label>
-                <select name="bias" class="form-select">
-                    <option value="">All</option>
-                    <option value="bullish" {% if filters.bias == 'bullish' %}selected{% endif %}>Bullish</option>
-                    <option value="bearish" {% if filters.bias == 'bearish' %}selected{% endif %}>Bearish</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold">Outcome</label>
-                <select name="outcome" class="form-select">
-                    <option value="">All</option>
-                    <option value="win" {% if filters.outcome == 'win' %}selected{% endif %}>Win</option>
-                    <option value="loss" {% if filters.outcome == 'loss' %}selected{% endif %}>Loss</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Search</label>
-                <input type="text" name="search" class="form-control" value="{{ filters.search }}" placeholder="Search observations...">
-            </div>
-            <div class="col-12 d-flex align-items-end gap-2 flex-wrap">
-                <button type="submit" class="btn btn-primary fw-bold">
-                    <i class="bi bi-search me-2"></i>Apply Filters
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-search me-2"></i>Search
                 </button>
-                <a href="{% url 'after_trade_list' %}" class="btn btn-outline-secondary fw-bold">
-                    <i class="bi bi-x-circle me-2"></i>Clear
-                </a>
             </div>
+            <!-- Preserve other filters -->
+            {% if filters.pair %}<input type="hidden" name="pair" value="{{ filters.pair }}">{% endif %}
+            {% if filters.outcome %}<input type="hidden" name="outcome" value="{{ filters.outcome }}">{% endif %}
+            {% if filters.date_from %}<input type="hidden" name="date_from" value="{{ filters.date_from }}">{% endif %}
+            {% if filters.date_to %}<input type="hidden" name="date_to" value="{{ filters.date_to }}">{% endif %}
+            {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
+            {% for field in custom_fields %}
+                {% get_custom_filter_value filters field.name as filter_val %}
+                {% if filter_val %}
+                    <input type="hidden" name="custom_{{ field.name }}" value="{{ filter_val }}">
+                {% endif %}
+            {% endfor %}
         </form>
+    </div>
+</div>
+
+<!-- Sort and Results Count -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <span class="badge bg-info fs-6">
+            <i class="bi bi-list-ul me-1"></i>{{ total_results }} result{{ total_results|pluralize }} found
+        </span>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0 me-2 fw-semibold">Sort By:</label>
+        <select name="sort" class="form-select" style="width: auto;" onchange="updateSort(this.value)">
+            <option value="date_desc" {% if filters.sort == 'date_desc' or not filters.sort %}selected{% endif %}>Date (Newest First)</option>
+            <option value="date_asc" {% if filters.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+            <option value="pair_asc" {% if filters.sort == 'pair_asc' %}selected{% endif %}>Pair (A-Z)</option>
+            <option value="pair_desc" {% if filters.sort == 'pair_desc' %}selected{% endif %}>Pair (Z-A)</option>
+            <option value="outcome_asc" {% if filters.sort == 'outcome_asc' %}selected{% endif %}>Outcome (A-Z)</option>
+            <option value="outcome_desc" {% if filters.sort == 'outcome_desc' %}selected{% endif %}>Outcome (Z-A)</option>
+        </select>
+    </div>
+</div>
+
+<!-- Advanced Filters -->
+<div class="filter-card card mb-4">
+    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" style="cursor: pointer;">
+        <h5 class="mb-0">
+            <i class="bi bi-funnel-fill me-2"></i>Advanced Filters
+            <i class="bi bi-chevron-down float-end"></i>
+        </h5>
+    </div>
+    <div class="collapse" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <!-- System Field Filters -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Pair</label>
+                        <select name="pair" class="form-select">
+                            <option value="">All Pairs</option>
+                            {% for pair in unique_pairs %}
+                                <option value="{{ pair }}" {% if filters.pair == pair %}selected{% endif %}>{{ pair }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Outcome</label>
+                        <select name="outcome" class="form-select">
+                            <option value="">All</option>
+                            <option value="win" {% if filters.outcome == 'win' %}selected{% endif %}>Win</option>
+                            <option value="loss" {% if filters.outcome == 'loss' %}selected{% endif %}>Loss</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}">
+                    </div>
+                    
+                    <!-- Custom Field Filters -->
+                    {% for field in custom_fields %}
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">{{ field.display_name }}</label>
+                            {% if field.field_type == 'select' %}
+                                <select name="custom_{{ field.name }}" class="form-select">
+                                    <option value="">All</option>
+                                    {% for option in field.journalfieldoption_set.all %}
+                                        <option value="{{ option.value }}" {% if filters|get_item:"custom_"|add:field.name == option.value %}selected{% endif %}>{{ option.display_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% elif field.field_type == 'multi_select' %}
+                                {% get_custom_filter_value filters field.name as filter_val %}
+                                <select name="custom_{{ field.name }}" class="form-select">
+                                    <option value="">All</option>
+                                    {% for option in field.journalfieldoption_set.all %}
+                                        <option value="{{ option.value }}" {% if filter_val == option.value %}selected{% endif %}>{{ option.display_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% elif field.field_type in 'number,decimal' %}
+                                {% get_custom_filter_min filters field.name as min_val %}
+                                {% get_custom_filter_max filters field.name as max_val %}
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="number" name="custom_{{ field.name }}_min" class="form-control" 
+                                               value="{{ min_val }}" placeholder="Min">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" name="custom_{{ field.name }}_max" class="form-control" 
+                                               value="{{ max_val }}" placeholder="Max">
+                                    </div>
+                                </div>
+                            {% elif field.field_type == 'date' %}
+                                {% get_custom_filter_min filters field.name as min_val %}
+                                {% get_custom_filter_max filters field.name as max_val %}
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="date" name="custom_{{ field.name }}_min" class="form-control" 
+                                               value="{{ min_val }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" name="custom_{{ field.name }}_max" class="form-control" 
+                                               value="{{ max_val }}">
+                                    </div>
+                                </div>
+                            {% elif field.field_type == 'checkbox' %}
+                                {% get_custom_filter_value filters field.name as filter_val %}
+                                <select name="custom_{{ field.name }}" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="true" {% if filter_val == 'true' %}selected{% endif %}>Yes</option>
+                                    <option value="false" {% if filter_val == 'false' %}selected{% endif %}>No</option>
+                                </select>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Preserve search and sort -->
+                {% if filters.search %}<input type="hidden" name="search" value="{{ filters.search }}">{% endif %}
+                {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
+                
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold">
+                        <i class="bi bi-search me-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'after_trade_list' %}" class="btn btn-outline-secondary fw-bold">
+                        <i class="bi bi-x-circle me-2"></i>Clear All
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -226,11 +337,10 @@
                     <tr>
                         <th style="padding: 1rem;">Date</th>
                         <th style="padding: 1rem;">Pair</th>
-                        <th style="padding: 1rem;">Session</th>
-                        <th style="padding: 1rem;">Bias</th>
                         <th style="padding: 1rem;">Outcome</th>
-                        <th style="padding: 1rem;">POI Score</th>
-                        <th style="padding: 1rem;">RR Ratio</th>
+                        {% for field in custom_fields %}
+                        <th style="padding: 1rem;">{{ field.display_name }}</th>
+                        {% endfor %}
                         <th style="padding: 1rem;" class="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -239,27 +349,27 @@
                         <tr onclick="window.location='{% url 'after_trade_detail' entry.pk %}'" style="cursor: pointer;">
                             <td style="padding: 1rem;"><strong>{{ entry.date|date:"M d, Y" }}</strong></td>
                             <td style="padding: 1rem;"><strong>{{ entry.pair }}</strong></td>
-                            <td style="padding: 1rem;">{{ entry.session }}</td>
                             <td style="padding: 1rem;">
-                                <span class="badge bg-{% if entry.bias == 'bullish' %}primary{% else %}danger{% endif %} px-3 py-2">
-                                    {{ entry.bias|title }}
-                                </span>
-                            </td>
-                            <td style="padding: 1rem;">
-                                <span class="badge bg-{% if entry.outcome == 'win' %}primary{% else %}danger{% endif %} px-3 py-2">
+                                <span class="badge bg-{% if entry.outcome == 'win' %}success{% else %}danger{% endif %} px-3 py-2">
                                     {{ entry.outcome|upper }}
                                 </span>
                             </td>
+                            {% for field in custom_fields %}
                             <td style="padding: 1rem;">
-                                <span class="badge bg-info px-3 py-2">{{ entry.poi_quality_score }}/5</span>
-                            </td>
-                            <td style="padding: 1rem;">
-                                {% if entry.rr_ratio %}
-                                    <span class="badge bg-success px-3 py-2">{{ entry.rr_ratio|floatformat:2 }}:1</span>
+                                {% get_entry_field_value entry field as field_value %}
+                                {% if field_value %}
+                                    {% if field.field_type == 'checkbox' %}
+                                        <span class="badge bg-{% if field_value == 'Yes' %}success{% else %}secondary{% endif %}">{{ field_value }}</span>
+                                    {% elif field.field_type in 'select,multiselect' %}
+                                        <span class="badge bg-primary">{{ field_value }}</span>
+                                    {% else %}
+                                        {{ field_value|truncatewords:10 }}
+                                    {% endif %}
                                 {% else %}
-                                    <span class="text-muted">N/A</span>
+                                    <span class="text-muted">—</span>
                                 {% endif %}
                             </td>
+                            {% endfor %}
                             <td style="padding: 1rem;" onclick="event.stopPropagation();" class="text-center">
                                 <div class="btn-group btn-group-sm">
                                     <a href="{% url 'after_trade_detail' entry.pk %}" class="btn btn-outline-primary" title="View">
@@ -276,7 +386,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="8" class="empty-state">
+                            <td colspan="{% if custom_fields %}{{ custom_fields|length|add:4 }}{% else %}4{% endif %}" class="empty-state">
                                 <i class="bi bi-inbox"></i>
                                 <h5 class="mt-3">No entries found</h5>
                                 <p class="text-muted">
@@ -324,4 +434,32 @@
         {% endif %}
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    function updateSort(sortValue) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', sortValue);
+        url.searchParams.delete('page'); // Reset to first page
+        window.location.href = url.toString();
+    }
+    
+    // Auto-expand filters if any are active
+    document.addEventListener('DOMContentLoaded', function() {
+        const hasActiveFilters = {% if filters.pair or filters.outcome or filters.date_from or filters.date_to %}true{% else %}false{% endif %};
+        {% for field in custom_fields %}
+            {% get_custom_filter_value filters field.name as filter_val %}
+            {% if filter_val %}hasActiveFilters = true;{% endif %}
+        {% endfor %}
+        
+        if (hasActiveFilters) {
+            const collapse = document.getElementById('filterCollapse');
+            if (collapse) {
+                const bsCollapse = new bootstrap.Collapse(collapse, { toggle: false });
+                bsCollapse.show();
+            }
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

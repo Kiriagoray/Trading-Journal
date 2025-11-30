@@ -93,9 +93,14 @@
             </h2>
             <p class="mb-0 opacity-90">Plan and document upcoming trade setups</p>
         </div>
-        <a href="{% url 'pre_trade_list' %}" class="btn btn-light back-btn-modern">
-            <i class="bi bi-arrow-left me-2"></i>Back to List
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'manage_properties' 'pre_trade' %}" class="btn btn-outline-light btn-sm" title="Add Custom Field">
+                <i class="bi bi-plus-circle me-1"></i>Add Field
+            </a>
+            <a href="{% url 'pre_trade_list' %}" class="btn btn-light back-btn-modern">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
     </div>
 </div>
 
@@ -105,135 +110,103 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <!-- Trade Info Section -->
+            <!-- System Fields Section -->
             <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-info-circle"></i> Trade Information</h6>
+                <h6 class="form-section-title"><i class="bi bi-info-circle"></i> System Fields</h6>
                 <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Pair *</label>
-                    {{ form.pair }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Date *</label>
-                    {{ form.date }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Bias *</label>
-                    {{ form.bias }}
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Predicted HTF Direction *</label>
-                    {{ form.predicted_htf_direction }}
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Pair *</label>
+                        {{ form.pair }}
+                        {% if form.pair.errors %}
+                            <div class="text-danger small">{{ form.pair.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Date *</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="text-danger small">{{ form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Direction/Bias *</label>
+                        {{ form.bias }}
+                        {% if form.bias.errors %}
+                            <div class="text-danger small">{{ form.bias.errors }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             
-            <!-- Market Analysis Section -->
+            <!-- Custom Fields Section -->
+            {% if form %}
+                {% for field_name, field in form.fields.items %}
+                    {% if field_name|startswith:'custom_' %}
+                        <div class="form-section">
+                            <h6 class="form-section-title"><i class="bi bi-sliders"></i> Custom Fields</h6>
+                            <div class="row g-3">
+                                {% for field_name, field in form.fields.items %}
+                                    {% if field_name|startswith:'custom_' %}
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold" for="id_{{ field_name }}">
+                                                {{ field.label }}
+                                                {% if field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ form|get_field:field_name }}
+                                            {% if field.help_text %}
+                                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                            {% endif %}
+                                            {% if form|get_field_errors:field_name %}
+                                                <div class="text-danger small">{{ form|get_field_errors:field_name }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% break %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Screenshots & Notes Section -->
             <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-graph-up"></i> Market Analysis</h6>
-                <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Market Condition *</label>
-                    {{ form.market_condition }}
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Liquidity Analysis *</label>
-                    {{ form.liquidity_analysis }}
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">HTF POI Type *</label>
-                    {{ form.htf_poi_type }}
-                </div>
-            </div>
-            
-            </div>
-            
-            <!-- Session & POI Section -->
-            <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-clock"></i> Session & POI Details</h6>
-                <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Session Target *</label>
-                    {{ form.session_target }}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">HTF Draws *</label>
-                    {{ form.htf_draws }}
-                    <small class="form-text text-muted">e.g., Resting London lows, Asian lows, HTF FVG</small>
-                </div>
-            </div>
-            
-            <!-- Lower Timeframe Section -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">Lower Timeframe Confirmation *</label>
-                {{ form.lower_tf_confirmation }}
-                <small class="form-text text-muted">e.g., 15M BOS + Retest, 5M BOS + Retest, OB entry</small>
-            </div>
-            
-            </div>
-            
-            <!-- Images Section -->
-            <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-image"></i> Setup & Outcome Images</h6>
-                <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Setup Picture</label>
+                <h6 class="form-section-title"><i class="bi bi-image"></i> Screenshots & Notes</h6>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Setup Image</label>
                     {{ form.setup_image }}
                     {% if entry and entry.setup_image %}
-                        <small class="form-text text-muted">Current: <a href="{{ entry.setup_image.url }}" target="_blank">View</a></small>
-                    {% endif %}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Outcome Picture</label>
-                    {{ form.outcome_image }}
-                    {% if entry and entry.outcome_image %}
-                        <small class="form-text text-muted">Current: <a href="{{ entry.outcome_image.url }}" target="_blank">View</a></small>
-                    {% endif %}
-                </div>
-            </div>
-            
-            </div>
-            
-            <!-- Trade Decision Section -->
-            <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-check-circle"></i> Trade Decision</h6>
-                <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="form-check form-switch">
-                        <label class="form-check-label fw-bold" for="id_all_conditions_met">All Conditions Met</label>
-                        {{ form.all_conditions_met }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check form-switch">
-                        <label class="form-check-label fw-bold" for="id_trade_taken">Trade Taken</label>
-                        {{ form.trade_taken }}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mb-4">
-                <label class="form-label fw-bold">Reason for Taking or Not Taking Trade *</label>
-                {{ form.reason_for_taking_or_not }}
-            </div>
-            
-            <!-- Dynamic Fields Section -->
-            {% get_dynamic_fields form as dynamic_fields %}
-            {% if dynamic_fields %}
-                <div class="form-section">
-                    <h6 class="form-section-title"><i class="bi bi-plus-circle"></i> Additional Fields</h6>
-                    <div class="row g-3">
-                        {% for field_name, field in dynamic_fields %}
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold" for="id_{{ field_name }}">{{ field.label|default:field_name|title }}</label>
-                                {{ form|get_field:field_name }}
-                                {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
+                        <div class="mt-2">
+                            <small class="form-text text-muted d-block mb-2">Current image:</small>
+                            <img src="{{ entry.setup_image.url }}" alt="Current setup" class="img-thumbnail" style="max-height: 200px; max-width: 100%;">
+                            <div class="mt-2">
+                                <a href="{{ entry.setup_image.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> View Full Size
+                                </a>
                             </div>
-                        {% endfor %}
-                    </div>
+                        </div>
+                    {% endif %}
+                    {% if form.setup_image.errors %}
+                        <div class="text-danger small">{{ form.setup_image.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">Upload an image file. The file will be stored on the server permanently.</small>
                 </div>
-            {% endif %}
+                <div>
+                    <label class="form-label fw-bold">Notes</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="text-danger small">{{ form.notes.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Add Field Link -->
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Want to add more fields? 
+                <a href="{% url 'manage_properties' 'pre_trade' %}" class="alert-link">Manage Properties</a> 
+                to create custom fields for your journal.
+            </div>
             
             <!-- Error Display -->
             {% if form.errors %}
@@ -249,17 +222,6 @@
                 </div>
             {% endif %}
             
-            </div>
-            
-            <!-- Notes Section -->
-            <div class="form-section">
-                <h6 class="form-section-title"><i class="bi bi-journal-text"></i> Notes</h6>
-                <div>
-                    <label class="form-label fw-bold">Notes</label>
-                    {{ form.notes }}
-                </div>
-            </div>
-            
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary btn-lg fw-bold">
                     <i class="bi bi-save"></i> Save Entry
@@ -274,4 +236,53 @@
         {% endif %}
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    // Image preview functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+        
+        imageInputs.forEach(function(input) {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check if file is an image
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file.');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('Image size must be less than 10MB.');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Create preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Remove existing preview if any
+                        const existingPreview = input.parentElement.querySelector('.image-preview-container');
+                        if (existingPreview) {
+                            existingPreview.remove();
+                        }
+                        
+                        // Create preview container
+                        const previewContainer = document.createElement('div');
+                        previewContainer.className = 'image-preview-container mt-2';
+                        previewContainer.innerHTML = `
+                            <small class="form-text text-muted d-block mb-2">New image preview:</small>
+                            <img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-height: 200px; max-width: 100%;">
+                        `;
+                        input.parentElement.appendChild(previewContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

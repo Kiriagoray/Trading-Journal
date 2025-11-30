@@ -11,12 +11,24 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- System Fields -->
         <div class="row mb-3">
-            <div class="col-md-3"><strong>HTF Bias:</strong> <span class="badge bg-{% if entry.htf_bias == 'bullish' %}success{% else %}danger{% endif %}">{{ entry.htf_bias|title }}</span></div>
-            <div class="col-md-3"><strong>Day:</strong> {{ entry.day_of_week }}</div>
-            <div class="col-md-3"><strong>Outcome:</strong> <span class="badge bg-info">{{ entry.outcome|upper }}</span></div>
-            <div class="col-md-3"><strong>Market Condition:</strong> {{ entry.market_condition }}</div>
+            <div class="col-md-4">
+                <strong>Pair:</strong> <span class="badge bg-primary">{{ entry.pair }}</span>
+            </div>
+            <div class="col-md-4">
+                <strong>Date:</strong> {{ entry.date|date:"M d, Y" }}
+            </div>
+            <div class="col-md-4">
+                <strong>Bias:</strong> <span class="badge bg-{% if entry.htf_bias == 'bullish' %}success{% else %}danger{% endif %}">{{ entry.htf_bias|title }}</span>
+            </div>
         </div>
+        {% if entry.screenshot %}
+        <div class="mb-3">
+            <strong>Screenshot:</strong><br>
+            <img src="{{ entry.screenshot.url }}" class="img-fluid rounded mt-2" alt="Screenshot" style="max-height: 500px;">
+        </div>
+        {% endif %}
         {% if entry.notes %}
         <div class="mb-3">
             <strong>Notes:</strong>
@@ -25,6 +37,36 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Custom Fields Section -->
+{% if custom_field_values %}
+<div class="card mb-3">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Custom Fields</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for field, value_obj in custom_field_values.items %}
+                {% if value_obj %}
+                <div class="col-md-4 mb-3">
+                    <strong>{{ field.display_name }}:</strong><br>
+                    {% if field.field_type == 'checkbox' %}
+                        <span class="badge bg-{% if value_obj.value_boolean %}success{% else %}secondary{% endif %}">
+                            {% if value_obj.value_boolean %}Yes{% else %}No{% endif %}
+                        </span>
+                    {% elif field.field_type in 'select,multiselect' %}
+                        <span class="badge bg-primary">{{ value_obj.get_value_display }}</span>
+                    {% else %}
+                        <span>{{ value_obj.get_value_display }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <a href="{% url 'backtest_list' %}" class="btn btn-secondary">Back to List</a>
 {% endblock %}
 

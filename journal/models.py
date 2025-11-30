@@ -2,6 +2,28 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
+import os
+
+
+def get_after_trade_upload_path(instance, filename):
+    """Generate user-specific upload path for after trade chart images"""
+    return f'journal/after_trade/user_{instance.user.id}/{filename}'
+
+
+def get_pre_trade_upload_path(instance, filename):
+    """Generate user-specific upload path for pre trade setup images"""
+    return f'journal/pre_trade/user_{instance.user.id}/{filename}'
+
+
+def get_pre_trade_outcome_upload_path(instance, filename):
+    """Generate user-specific upload path for pre trade outcome images"""
+    return f'journal/pre_trade_outcomes/user_{instance.user.id}/{filename}'
+
+
+def get_backtest_upload_path(instance, filename):
+    """Generate user-specific upload path for backtest screenshots"""
+    return f'journal/backtesting/user_{instance.user.id}/{filename}'
 
 
 # Choice constants - These are fallbacks if Configuration system is not set up
@@ -94,22 +116,6 @@ DAY_OF_WEEK_CHOICES = [
 ]
 
 
-class Entry(models.Model):
-    """Legacy entry model"""
-    title = models.CharField(max_length=200)
-    content = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='entries')
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name_plural = 'Entries'
-
-    def __str__(self):
-        return self.title
-
-
 class StrategyTag(models.Model):
     """Strategy tags for categorizing trades"""
     name = models.CharField(max_length=50, unique=True)
@@ -148,7 +154,7 @@ class AfterTradeEntry(models.Model):
     outcome = models.CharField(max_length=10, choices=OUTCOME_CHOICES)
     is_win = models.BooleanField(default=False, editable=False)
     discipline_score = models.CharField(max_length=20, choices=DISCIPLINE_SCORE_CHOICES)
-    chart_image = models.ImageField(upload_to='journal/after_trade/', blank=True, null=True)
+    chart_image = models.ImageField(upload_to=get_after_trade_upload_path, blank=True, null=True)
     observations = models.TextField()
     # RR Tracking fields
     risk_pips = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, help_text='Stop loss in pips')
@@ -190,11 +196,11 @@ class PreTradeEntry(models.Model):
     session_target = models.CharField(max_length=20, choices=SESSION_CHOICES)
     htf_draws = models.TextField()
     lower_tf_confirmation = models.TextField()
-    setup_image = models.ImageField(upload_to='journal/pre_trade/', blank=True, null=True)
+    setup_image = models.ImageField(upload_to=get_pre_trade_upload_path, blank=True, null=True)
     all_conditions_met = models.BooleanField(default=False)
     trade_taken = models.BooleanField(default=False)
     reason_for_taking_or_not = models.TextField()
-    outcome_image = models.ImageField(upload_to='journal/pre_trade_outcomes/', blank=True, null=True)
+    outcome_image = models.ImageField(upload_to=get_pre_trade_outcome_upload_path, blank=True, null=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -228,7 +234,7 @@ class BacktestEntry(models.Model):
     entry_trigger = models.CharField(max_length=200)
     behaviour_based_on_previous_moves = models.TextField()
     outcome = models.CharField(max_length=20, choices=BACKTEST_OUTCOME_CHOICES)
-    screenshot = models.ImageField(upload_to='journal/backtesting/', blank=True, null=True)
+    screenshot = models.ImageField(upload_to=get_backtest_upload_path, blank=True, null=True)
     notes = models.TextField(blank=True)
     chasing_long_on = models.BooleanField(default=False)
     overnight = models.BooleanField(default=False)
@@ -314,17 +320,21 @@ class FilterPreset(models.Model):
 
 class LotSizeCalculation(models.Model):
     """Lot size calculation history"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lot_calculations')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lot_size_calculations')
+    instrument = models.CharField(max_length=100, help_text='Instrument name (e.g., EUR/USD)')
     account_balance = models.DecimalField(max_digits=12, decimal_places=2)
+    account_currency = models.CharField(max_length=10, default='USD', help_text='Account currency')
     risk_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     stop_loss_pips = models.DecimalField(max_digits=8, decimal_places=2)
-    instrument = models.CharField(max_length=20)
     calculated_lot_size = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Lot Size Calculations'
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
 
     def __str__(self):
         return f"{self.instrument} - {self.calculated_lot_size} lots ({self.created_at.date()})"
@@ -383,4 +393,140 @@ class TradeTemplate(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.user.username})"
+
+
+# Dynamic Field System Models
+class JournalField(models.Model):
+    """User-defined custom field for journal entries"""
+    FIELD_TYPE_CHOICES = [
+        ('text', 'Text'),
+        ('textarea', 'Long Text'),
+        ('number', 'Number'),
+        ('decimal', 'Decimal'),
+        ('select', 'Select (Single Choice)'),
+        ('multiselect', 'Multi-Select (Multiple Choices)'),
+        ('checkbox', 'Checkbox'),
+        ('date', 'Date'),
+        ('time', 'Time'),
+        ('datetime', 'Date & Time'),
+        ('url', 'URL'),
+        ('email', 'Email'),
+    ]
+    
+    JOURNAL_TYPE_CHOICES = [
+        ('after_trade', 'After Trade'),
+        ('pre_trade', 'Pre Trade'),
+        ('backtest', 'Backtest'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='journal_fields')
+    journal_type = models.CharField(max_length=20, choices=JOURNAL_TYPE_CHOICES)
+    name = models.CharField(max_length=100, help_text='Field name (internal identifier, e.g., "smt_confirmation")')
+    display_name = models.CharField(max_length=200, help_text='Display name (e.g., "SMT Confirmation")')
+    field_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES, default='text')
+    is_required = models.BooleanField(default=False)
+    order = models.IntegerField(default=0, help_text='Display order (lower numbers appear first)')
+    is_active = models.BooleanField(default=True)
+    help_text = models.TextField(blank=True, help_text='Help text shown to users')
+    default_value = models.TextField(blank=True, help_text='Default value for this field')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['journal_type', 'order', 'display_name']
+        unique_together = ['user', 'journal_type', 'name']
+        verbose_name = 'Journal Field'
+        verbose_name_plural = 'Journal Fields'
+    
+    def __str__(self):
+        return f"{self.get_journal_type_display()}: {self.display_name} ({self.user.username})"
+
+
+class JournalFieldOption(models.Model):
+    """Options for select/multi-select fields"""
+    field = models.ForeignKey(JournalField, on_delete=models.CASCADE, related_name='options')
+    value = models.CharField(max_length=200, help_text='Value stored in database')
+    display_label = models.CharField(max_length=200, help_text='Label shown to users')
+    order = models.IntegerField(default=0, help_text='Display order')
+    color = models.CharField(max_length=7, default='#6c757d', help_text='Hex color for badges')
+    
+    class Meta:
+        ordering = ['field', 'order', 'display_label']
+        unique_together = ['field', 'value']
+    
+    def __str__(self):
+        return f"{self.field.display_name}: {self.display_label}"
+
+
+class JournalFieldValue(models.Model):
+    """Stores values for user-defined fields in journal entries"""
+    # Generic foreign key approach - store entry type and ID
+    entry_type = models.CharField(max_length=20, choices=[
+        ('after_trade', 'After Trade'),
+        ('pre_trade', 'Pre Trade'),
+        ('backtest', 'Backtest'),
+    ])
+    entry_id = models.IntegerField(help_text='ID of the journal entry')
+    field = models.ForeignKey(JournalField, on_delete=models.CASCADE, related_name='values')
+    # Store value as text - we'll parse based on field_type
+    value_text = models.TextField(blank=True, help_text='Stored as text, parsed by field type')
+    value_number = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    value_boolean = models.BooleanField(null=True, blank=True)
+    value_date = models.DateField(null=True, blank=True)
+    value_datetime = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['field__order', 'field__display_name']
+        unique_together = ['entry_type', 'entry_id', 'field']
+        verbose_name = 'Journal Field Value'
+        verbose_name_plural = 'Journal Field Values'
+    
+    def __str__(self):
+        return f"{self.field.display_name}: {self.get_value_display()}"
+    
+    def get_value_display(self):
+        """Get the value formatted for display based on field type"""
+        if self.field.field_type == 'checkbox':
+            return 'Yes' if self.value_boolean else 'No'
+        elif self.field.field_type in ['number', 'decimal']:
+            return str(self.value_number) if self.value_number is not None else ''
+        elif self.field.field_type == 'date':
+            return str(self.value_date) if self.value_date else ''
+        elif self.field.field_type == 'datetime':
+            return str(self.value_datetime) if self.value_datetime else ''
+        elif self.field.field_type == 'multiselect':
+            # Multi-select values are stored as comma-separated in value_text
+            return self.value_text
+        else:
+            return self.value_text
+    
+    def set_value(self, value):
+        """Set the value based on field type"""
+        if self.field.field_type == 'checkbox':
+            self.value_boolean = bool(value)
+            self.value_text = str(value)
+        elif self.field.field_type in ['number', 'decimal']:
+            try:
+                self.value_number = Decimal(str(value))
+                self.value_text = str(value)
+            except:
+                self.value_text = str(value)
+        elif self.field.field_type == 'date':
+            if isinstance(value, str):
+                from django.utils.dateparse import parse_date
+                self.value_date = parse_date(value)
+            else:
+                self.value_date = value
+            self.value_text = str(value) if value else ''
+        elif self.field.field_type == 'datetime':
+            if isinstance(value, str):
+                from django.utils.dateparse import parse_datetime
+                self.value_datetime = parse_datetime(value)
+            else:
+                self.value_datetime = value
+            self.value_text = str(value) if value else ''
+        else:
+            self.value_text = str(value) if value else ''
 

@@ -445,6 +445,17 @@
                         <i class="bi bi-file-earmark-text"></i> Templates
                     </a>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {% if 'properties' in request.path %}active{% endif %}" 
+                       href="#" id="propertiesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-sliders"></i> <span class="d-none d-md-inline">Properties</span><span class="d-md-none">Props</span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="propertiesDropdown">
+                        <li><a class="dropdown-item" href="{% url 'manage_properties' 'after_trade' %}">After Trade Fields</a></li>
+                        <li><a class="dropdown-item" href="{% url 'manage_properties' 'pre_trade' %}">Pre Trade Fields</a></li>
+                        <li><a class="dropdown-item" href="{% url 'manage_properties' 'backtest' %}">Backtest Fields</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.url_name == 'settings' or 'settings' in request.path %}active{% endif %}" 
                        href="{% url 'settings' %}">
