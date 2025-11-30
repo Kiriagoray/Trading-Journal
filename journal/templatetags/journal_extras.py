@@ -60,3 +60,10 @@ def get_custom_filter_max(filters, field_name):
     key = f'custom_{field_name}_max'
     return filters.get(key, '') if filters else ''
 
+@register.filter
+def startswith(value, arg):
+    """Check if a string starts with a given substring"""
+    if value and arg:
+        return str(value).startswith(str(arg))
+    return False
+

@@ -153,29 +153,28 @@
             {% if form %}
                 {% for field_name, field in form.fields.items %}
                     {% if field_name|startswith:'custom_' %}
-                        <div class="form-section">
-                            <h6 class="form-section-title"><i class="bi bi-sliders"></i> Custom Fields</h6>
-                            <div class="row g-3">
-                                {% for field_name, field in form.fields.items %}
-                                    {% if field_name|startswith:'custom_' %}
-                                        <div class="col-md-4">
-                                            <label class="form-label fw-bold" for="id_{{ field_name }}">
-                                                {{ field.label }}
-                                                {% if field.required %}<span class="text-danger">*</span>{% endif %}
-                                            </label>
-                                            {{ form|get_field:field_name }}
-                                            {% if field.help_text %}
-                                                <small class="form-text text-muted">{{ field.help_text }}</small>
-                                            {% endif %}
-                                            {% if form|get_field_errors:field_name %}
-                                                <div class="text-danger small">{{ form|get_field_errors:field_name }}</div>
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
+                        {% if forloop.first %}
+                            <div class="form-section">
+                                <h6 class="form-section-title"><i class="bi bi-sliders"></i> Custom Fields</h6>
+                                <div class="row g-3">
+                        {% endif %}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold" for="id_{{ field_name }}">
+                                            {{ field.label }}
+                                            {% if field.required %}<span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                        {{ form|get_field:field_name }}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                        {% if form|get_field_errors:field_name %}
+                                            <div class="text-danger small">{{ form|get_field_errors:field_name }}</div>
+                                        {% endif %}
+                                    </div>
+                        {% if forloop.last %}
+                                </div>
                             </div>
-                        </div>
-                        {% break %}
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             {% endif %}

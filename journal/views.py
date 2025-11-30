@@ -341,7 +341,10 @@ def after_trade_create(request):
             return redirect('after_trade_detail', pk=entry.pk)
     else:
         form = AfterTradeEntryForm(user=request.user)
-    return render(request, 'journal/after_trade_form.html', {'form': form})
+    return render(request, 'journal/after_trade_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
 
 
 @login_required
@@ -630,7 +633,10 @@ def pre_trade_create(request):
             return redirect('pre_trade_detail', pk=entry.pk)
     else:
         form = PreTradeEntryForm(user=request.user)
-    return render(request, 'journal/pre_trade_form.html', {'form': form})
+    return render(request, 'journal/pre_trade_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
 
 
 @login_required
@@ -670,7 +676,11 @@ def pre_trade_edit(request, pk):
             return redirect('pre_trade_detail', pk=entry.pk)
     else:
         form = PreTradeEntryForm(instance=entry, user=request.user)
-    return render(request, 'journal/pre_trade_form.html', {'form': form, 'entry': entry})
+    return render(request, 'journal/pre_trade_form.html', {
+        'form': form,
+        'entry': entry,
+        'action': 'Edit'
+    })
 
 
 @login_required
@@ -899,7 +909,10 @@ def backtest_create(request):
             return redirect('backtest_detail', pk=entry.pk)
     else:
         form = BacktestEntryForm(user=request.user)
-    return render(request, 'journal/backtest_form.html', {'form': form})
+    return render(request, 'journal/backtest_form.html', {
+        'form': form,
+        'action': 'Create'
+    })
 
 
 @login_required
@@ -939,7 +952,11 @@ def backtest_edit(request, pk):
             return redirect('backtest_detail', pk=entry.pk)
     else:
         form = BacktestEntryForm(instance=entry, user=request.user)
-    return render(request, 'journal/backtest_form.html', {'form': form, 'entry': entry})
+    return render(request, 'journal/backtest_form.html', {
+        'form': form,
+        'entry': entry,
+        'action': 'Edit'
+    })
 
 
 @login_required
