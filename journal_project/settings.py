@@ -52,14 +52,24 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must be after SecurityMiddleware
+]
+
+# Add WhiteNoise middleware if available (for production)
+try:
+    import whitenoise
+    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')  # Must be after SecurityMiddleware
+except ImportError:
+    # WhiteNoise not installed, skip (for local development)
+    pass
+
+MIDDLEWARE.extend([
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+])
 
 ROOT_URLCONF = 'journal_project.urls'
 
@@ -180,11 +190,15 @@ STATICFILES_DIRS = [
 # WhiteNoise allows the app to serve its own static files, making it a self-contained unit
 # Using CompressedStaticFilesStorage (non-manifest) for better reliability with favicons
 # This ensures static files are served correctly even if manifest generation has issues
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-# WhiteNoise settings
-WHITENOISE_USE_FINDERS = True  # Use Django's static file finders
-WHITENOISE_AUTOREFRESH = DEBUG  # Only auto-refresh in development
+try:
+    import whitenoise
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    # WhiteNoise settings
+    WHITENOISE_USE_FINDERS = True  # Use Django's static file finders
+    WHITENOISE_AUTOREFRESH = DEBUG  # Only auto-refresh in development
+except ImportError:
+    # WhiteNoise not installed, use default storage (for local development)
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # Media files (User uploads)
 MEDIA_URL = '/media/'
