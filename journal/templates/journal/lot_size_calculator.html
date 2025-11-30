@@ -329,6 +329,7 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -356,6 +357,7 @@
         const dropdown = document.createElement('div');
         dropdown.className = 'instrument-dropdown';
         dropdown.id = 'instrument_dropdown';
+        dropdown.style.display = 'none'; // Hide by default
         
         // Replace select with searchable input
         instrumentSelect.parentNode.insertBefore(searchWrapper, instrumentSelect);
@@ -400,6 +402,12 @@
                 }
             });
             
+            return hasResults;
+        }
+        
+        // Show dropdown with filtered results
+        function showDropdown(filter = '') {
+            const hasResults = populateDropdown(filter);
             if (hasResults) {
                 dropdown.style.display = 'block';
             } else {
@@ -424,14 +432,19 @@
             calculateRealTime();
         }
         
+        // Show dropdown when input is focused or clicked
+        searchInput.addEventListener('focus', function() {
+            showDropdown(this.value);
+        });
+        
+        searchInput.addEventListener('click', function() {
+            showDropdown(this.value);
+        });
+        
         // Search input event
         searchInput.addEventListener('input', function(e) {
             const filter = e.target.value;
-            if (filter.length > 0) {
-                populateDropdown(filter);
-            } else {
-                dropdown.style.display = 'none';
-            }
+            showDropdown(filter);
         });
         
         // Close dropdown when clicking outside
@@ -486,8 +499,8 @@
             }
         });
         
-        // Initialize dropdown
-        populateDropdown();
+        // Initialize: don't show dropdown on page load, only when user interacts
+        // Dropdown is already hidden by default
     });
 </script>
 {% endblock %}
