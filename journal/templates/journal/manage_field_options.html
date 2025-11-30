@@ -1,0 +1,161 @@
+{% extends 'journal/base_dashboard.html' %}
+
+{% block title %}Manage Options - {{ field.display_name }} - Ray's JournalX{% endblock %}
+{% block page_title %}Manage Options: {{ field.display_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Insight Hub</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'manage_properties' field.journal_type %}">Manage Properties</a></li>
+        <li class="breadcrumb-item active">Field Options</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Add New Option Form -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Add New Option</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Display Label *</label>
+                        <input type="text" name="display_label" class="form-control" required 
+                               placeholder="e.g., Option Name">
+                        <small class="text-muted">Shown to users</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Value (Internal)</label>
+                        <input type="text" name="value" class="form-control" 
+                               placeholder="Auto-generated from label if empty">
+                        <small class="text-muted">Internal identifier (auto-converted from label)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" name="color" class="form-control form-control-color" 
+                               value="#6c757d" title="Choose color">
+                        <small class="text-muted">Color for badges/display</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Add Option
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{% url 'manage_properties' field.journal_type %}" class="btn btn-secondary w-100">
+                <i class="bi bi-arrow-left me-2"></i>Back to Properties
+            </a>
+        </div>
+    </div>
+    
+    <!-- Options List -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check me-2"></i>Options for "{{ field.display_name }}"
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if options %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">Order</th>
+                                <th>Display Label</th>
+                                <th>Value</th>
+                                <th>Color</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="optionsTableBody">
+                            {% for option in options %}
+                            <tr data-option-id="{{ option.id }}">
+                                <td>
+                                    <span class="badge bg-secondary">{{ option.order }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ option.display_label }}</strong>
+                                </td>
+                                <td>
+                                    <code class="text-muted">{{ option.value }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ option.color }}; color: white;">
+                                        {{ option.display_label }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="post" class="d-inline" 
+                                          onsubmit="return confirm('Delete this option?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="option_id" value="{{ option.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No options yet. Add your first option using the form on the left.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if messages %}
+<div class="mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-generate value from display_label if value is empty
+    document.addEventListener('DOMContentLoaded', function() {
+        const displayLabelInput = document.querySelector('input[name="display_label"]');
+        const valueInput = document.querySelector('input[name="value"]');
+        
+        if (displayLabelInput && valueInput) {
+            displayLabelInput.addEventListener('blur', function() {
+                if (!valueInput.value.trim()) {
+                    // Convert display label to value: lowercase, replace spaces with underscores
+                    const value = this.value.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '_');
+                    valueInput.value = value;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+

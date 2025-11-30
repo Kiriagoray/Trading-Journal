@@ -1674,9 +1674,17 @@ def manage_field_options(request, field_id):
         action = request.POST.get('action')
         
         if action == 'add':
-            value = request.POST.get('value', '').strip().lower().replace(' ', '_')
             display_label = request.POST.get('display_label', '').strip()
+            value = request.POST.get('value', '').strip()
             color = request.POST.get('color', '#6c757d')
+            
+            # Auto-generate value from display_label if empty
+            if not value and display_label:
+                value = re.sub(r'[^a-z0-9_]', '_', display_label.lower())
+                value = re.sub(r'_+', '_', value)
+                value = value.strip('_')
+            else:
+                value = value.lower().replace(' ', '_')
             
             if value and display_label:
                 max_order = options.aggregate(Max('order'))['order__max'] or 0
